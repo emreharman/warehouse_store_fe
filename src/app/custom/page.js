@@ -14,7 +14,9 @@ import {
   Minus,
   Plus,
   Rocket,
+  Upload
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function CustomOrderPage() {
   const [form, setForm] = useState({
@@ -46,6 +48,8 @@ export default function CustomOrderPage() {
   });
 
   const [quantity, setQuantity] = useState(1);
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -81,9 +85,32 @@ export default function CustomOrderPage() {
     const { name, value } = e.target;
     setSelectedVariant((prev) => ({ ...prev, [name]: value }));
   };
+  const handleFileChange = (e) => {
+    setFiles(Array.from(e.target.files));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploading(true);
+
+    let designFiles = [];
+
+    try {
+      for (const file of files) {
+        const { data, error } = await supabase.storage
+          .from("designs")
+          .upload(`custom/${Date.now()}-${file.name}`, file);
+
+        if (error) throw error;
+
+        const url = supabase.storage.from("designs").getPublicUrl(data.path);
+        designFiles.push(url.data.publicUrl);
+      }
+    } catch (error) {
+      toast.error("Dosya yüklenemedi.");
+      setUploading(false);
+      return;
+    }
 
     const payload = {
       customer: {
@@ -101,7 +128,7 @@ export default function CustomOrderPage() {
             discount: 0,
           },
           quantity,
-          designFiles: [],
+          designFiles,
         },
       ],
       note: form.note,
@@ -126,8 +153,11 @@ export default function CustomOrderPage() {
       });
       setSelectedVariant({ color: "", size: "", quality: "", fit: "" });
       setQuantity(1);
+      setFiles([]);
     } catch (err) {
       toast.error("Sipariş oluşturulamadı.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -262,6 +292,31 @@ export default function CustomOrderPage() {
                     className="input h-24"
                   />
                 </div>
+              </div>
+              {/* Dosya Yükleme */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                  <Upload className="w-5 h-5" /> Tasarım Dosyası Yükle
+                </h2>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="input"
+                />
+                {files.length > 0 && (
+                  <div className="flex flex-wrap gap-4">
+                    {files.map((file, i) => (
+                      <div
+                        key={i}
+                        className="bg-gray-100 border rounded-lg px-3 py-1 text-sm"
+                      >
+                        {file.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Desktop butonu */}
