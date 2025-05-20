@@ -1,19 +1,21 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
+import { persistStore, persistReducer } from "redux-persist";
+import storage from "redux-persist/lib/storage";
 
-import categoryReducer from './categorySlice';
-import productReducer from './productSlice'; // 🆕
+import categoryReducer from "./categorySlice";
+import productReducer from "./productSlice";
+import cartReducer from "./cartSlice";
 
 const persistConfig = {
-  key: 'root',
+  key: "root",
   storage,
   version: 1,
 };
 
 const rootReducer = combineReducers({
   category: categoryReducer,
-  product: productReducer, // 🆕 ürün reducer eklendi
+  product: productReducer,
+  cart: cartReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

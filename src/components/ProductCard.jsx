@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Minus, Plus } from 'lucide-react'
+import { useCart } from '@/hooks/useCart'
+import { toast } from 'react-hot-toast'
 
 export default function ProductCard({ product }) {
   const image = product.images?.[0] || '/placeholder.png'
@@ -9,6 +11,37 @@ export default function ProductCard({ product }) {
   const price = variant?.price || 0
   const discount = variant?.discount || 0
   const finalPrice = discount ? price - (price * discount) / 100 : price
+
+  const { add, remove, update, items } = useCart()
+
+  const cartItem = items.find((item) => item.id === product._id)
+  const quantity = cartItem?.qty || 0
+
+  const handleAdd = (e) => {
+    e.preventDefault()
+    if (quantity > 0) {
+      update(product._id, quantity + 1)
+    } else {
+      add({
+        id: product._id,
+        name: product.name,
+        image,
+        price: finalPrice,
+        qty: 1,
+      })
+      toast.success('Ürün sepete eklendi!')
+    }
+  }
+
+  const handleDecrement = (e) => {
+    e.preventDefault()
+    if (quantity <= 1) {
+      remove(product._id)
+      toast.error('Ürün sepetten çıkarıldı')
+    } else {
+      update(product._id, quantity - 1)
+    }
+  }
 
   return (
     <div className="relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md hover:shadow-lg transition-all duration-300">
@@ -48,13 +81,33 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
 
-      {/* Sepete Ekle Butonu */}
-      <button
-        onClick={() => alert('Sepete eklendi')} // burayı özelleştirebilirsin
-        className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition"
-      >
-        <ShoppingCart className="w-4 h-4" />
-      </button>
+      {/* Sepet Kontrol Butonları */}
+      <div className="absolute bottom-3 right-3">
+        {quantity > 0 ? (
+          <div className="flex items-center gap-2 bg-primary text-white rounded-full px-3 py-1 shadow-md">
+            <button
+              onClick={handleDecrement}
+              className="p-1 hover:opacity-80 transition"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-medium">{quantity}</span>
+            <button
+              onClick={handleAdd}
+              className="p-1 hover:opacity-80 transition"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition"
+          >
+            <ShoppingCart className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
   )
 }

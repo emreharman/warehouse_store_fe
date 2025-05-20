@@ -1,38 +1,70 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchProducts } from "@/store/productSlice";
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { useSelector, useDispatch } from 'react-redux'
+import { fetchProducts } from '@/store/productSlice'
+import { useCart } from '@/hooks/useCart'
+import { toast } from 'react-hot-toast'
+import { Minus, Plus } from 'lucide-react'
 
 export default function ProductDetailPage() {
-  const { id } = useParams();
-  const dispatch = useDispatch();
-  const { items: products, loading } = useSelector((state) => state.product);
-  const [product, setProduct] = useState(null);
+  const { id } = useParams()
+  const dispatch = useDispatch()
+  const { items: products, loading } = useSelector((state) => state.product)
+  const [product, setProduct] = useState(null)
+
+  const { items: cartItems, add, update, remove } = useCart()
 
   useEffect(() => {
     if (products.length === 0) {
-      dispatch(fetchProducts());
+      dispatch(fetchProducts())
     } else {
-      const found = products.find((p) => p._id === id);
-      setProduct(found || null);
+      const found = products.find((p) => p._id === id)
+      setProduct(found || null)
     }
-  }, [dispatch, products, id]);
+  }, [dispatch, products, id])
 
-  if (loading || !product) return <div className="p-6">Yükleniyor...</div>;
+  if (loading || !product) return <div className="p-6">Yükleniyor...</div>
 
-  const image = product.images?.[0] || "/placeholder.png";
-  const variant = product.variants?.[0];
-  const price = variant?.price || 0;
-  const discount = variant?.discount || 0;
-  const finalPrice = discount ? price - (price * discount) / 100 : price;
+  const image = product.images?.[0] || '/placeholder.png'
+  const variant = product.variants?.[0]
+  const price = variant?.price || 0
+  const discount = variant?.discount || 0
+  const finalPrice = discount ? price - (price * discount) / 100 : price
+
+  const cartItem = cartItems.find((item) => item.id === product._id)
+  const quantity = cartItem?.qty || 0
+
+  const handleAdd = () => {
+    if (quantity > 0) {
+      update(product._id, quantity + 1)
+    } else {
+      add({
+        id: product._id,
+        name: product.name,
+        image,
+        price: finalPrice,
+        qty: 1,
+      })
+      toast.success('Ürün sepete eklendi!')
+    }
+  }
+
+  const handleDecrement = () => {
+    if (quantity <= 1) {
+      remove(product._id)
+      toast.error('Ürün sepetten çıkarıldı')
+    } else {
+      update(product._id, quantity - 1)
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Ürün Görseli */}
-        <div className="w-full overflow-hidden rounded-xl border shadow-sm">
+        <div className="relative w-full overflow-hidden rounded-xl border shadow-sm">
           <img
             src={image}
             alt={product.name}
@@ -67,14 +99,29 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Sepete Ekle Butonu */}
+          {/* Sepet Kontrolleri */}
           <div className="mt-8">
-            <button className="w-full bg-primary text-white py-4 rounded-xl text-lg font-semibold shadow-md transition duration-300 ease-in-out hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg">
-              Sepete Ekle
-            </button>
+            {quantity > 0 ? (
+              <div className="flex items-center justify-center gap-4 bg-primary text-white rounded-xl py-4 shadow-md">
+                <button onClick={handleDecrement} className="p-2 hover:opacity-80 transition">
+                  <Minus className="w-5 h-5" />
+                </button>
+                <span className="text-lg font-semibold">{quantity}</span>
+                <button onClick={handleAdd} className="p-2 hover:opacity-80 transition">
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleAdd}
+                className="w-full bg-primary text-white py-4 rounded-xl text-lg font-semibold shadow-md transition duration-300 ease-in-out hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg"
+              >
+                Sepete Ekle
+              </button>
+            )}
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
