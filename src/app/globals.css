@@ -10,3 +10,6 @@ body {
 a {
   @apply no-underline text-inherit;
 }
+.input {
+  @apply w-full rounded-lg border border-gray-300 px-4 py-2.5 shadow-sm text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition;
+}
