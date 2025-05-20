@@ -3,6 +3,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
 import categoryReducer from './categorySlice';
+import productReducer from './productSlice'; // 🆕
 
 const persistConfig = {
   key: 'root',
@@ -12,6 +13,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   category: categoryReducer,
+  product: productReducer, // 🆕 ürün reducer eklendi
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
