@@ -1,22 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import api from "../lib/api";
-import { ENDPOINTS } from "../constants/endpoints";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCategories } from "@/store/categorySlice";
 import { toTitleCase } from "@/utils/format";
 
 export default function Navbar() {
-  const [categories, setCategories] = useState([]);
   const pathname = usePathname();
+  const dispatch = useDispatch();
+
+  const { items: categories, loading } = useSelector((state) => state.category);
 
   useEffect(() => {
-    api
-      .get(ENDPOINTS.CATEGORIES)
-      .then(({ data }) => setCategories(data))
-      .catch((err) => console.error("Kategori verisi alınamadı:", err));
-  }, []);
+    if (!categories || categories.length === 0) {
+      dispatch(fetchCategories());
+    }
+  }, [dispatch, categories]);
 
   const isActive = (slugOrId) => {
     if (slugOrId === "all") return pathname === "/";
@@ -55,12 +56,10 @@ export default function Navbar() {
             >
               <span className="relative z-10 px-1">Tüm Ürünler</span>
               <span
-                className={
-                  isActive("all") ? activeSpanClasses : hoverSpanClasses
-                }
+                className={isActive("all") ? activeSpanClasses : hoverSpanClasses}
               />
             </Link>
-            {categories.map((cat) => {
+            {categories?.map((cat) => {
               const active = isActive(cat.slug || cat._id);
               return (
                 <Link
@@ -98,7 +97,7 @@ export default function Navbar() {
           >
             Tüm Ürünler
           </Link>
-          {categories.map((cat) => (
+          {categories?.map((cat) => (
             <Link
               key={cat._id}
               href={`/category/${cat.slug || cat._id}`}
