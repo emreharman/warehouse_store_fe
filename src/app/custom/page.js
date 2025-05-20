@@ -111,7 +111,6 @@ export default function CustomOrderPage() {
     try {
       await api.post("/orders", payload);
       toast.success("Sipariş başarıyla oluşturuldu!");
-      // Reset
       setForm({
         name: "",
         phone: "",
@@ -134,136 +133,154 @@ export default function CustomOrderPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto px-4 pb-40 pt-12 md:pb-12">
-        <div className="bg-white shadow-xl rounded-3xl p-8 md:p-10 border border-gray-100">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-primary mb-10 flex items-center gap-3">
-            <Shirt className="w-8 h-8" />
-            Özel Tişört Siparişi
-          </h1>
+      {/* Arka plan çizgili zemin */}
+      <div className="relative z-0 min-h-screen overflow-hidden">
+        <div
+          className="absolute inset-0 z-[-1]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(135deg, #e5e7eb 0, #e5e7eb 1px, transparent 1px, transparent 40px)",
+            backgroundSize: "40px 40px",
+          }}
+        ></div>
 
-          <form onSubmit={handleSubmit} className="space-y-10">
-            {/* Müşteri Bilgileri */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                <User className="w-5 h-5" /> Müşteri Bilgileri
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Ad Soyad"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                  className="input"
-                />
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Telefon"
-                  value={form.phone}
-                  onChange={handleChange}
-                  required
-                  className="input"
-                />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="E-posta"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="input"
-                />
-                <input
-                  name="address.line1"
-                  placeholder="Adres"
-                  value={form.address.line1}
-                  onChange={handleChange}
-                  required
-                  className="input"
-                />
-              </div>
-            </div>
+        {/* Sayfa içeriği */}
+        <div className="max-w-4xl mx-auto px-4 pb-40 pt-12 md:pb-12">
+          <div className="bg-white shadow-xl rounded-3xl p-8 md:p-10 border border-gray-100">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-primary mb-10 flex items-center gap-3">
+              <Shirt className="w-8 h-8" />
+              Özel Tişört Siparişi
+            </h1>
 
-            {/* Varyant Seçimi */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                <Layers className="w-5 h-5" /> Tişört Özellikleri
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.entries(variantOptions).map(([type, options]) => (
-                  <select
-                    key={type}
-                    name={type}
-                    value={selectedVariant[type] || ""}
-                    onChange={handleVariantChange}
-                    className="input capitalize"
+            <form
+              onSubmit={handleSubmit}
+              id="custom-order-form"
+              className="space-y-10"
+            >
+              {/* Müşteri Bilgileri */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                  <User className="w-5 h-5" /> Müşteri Bilgileri
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    name="name"
+                    placeholder="Ad Soyad"
+                    value={form.name}
+                    onChange={handleChange}
                     required
-                  >
-                    <option value="">{type}</option>
-                    {options.map((opt, i) => (
-                      <option key={i} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                ))}
-              </div>
-            </div>
-
-            {/* Adet + Not */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                <ClipboardList className="w-5 h-5" /> Sipariş Detayları
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                {/* Modern adet inputu */}
-                <div className="flex items-center justify-between gap-4 border rounded-lg px-4 py-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    Adet
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="p-2 bg-gray-100 rounded hover:bg-gray-200"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-8 text-center font-semibold">
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setQuantity((q) => q + 1)}
-                      className="p-2 bg-gray-100 rounded hover:bg-gray-200"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
+                    className="input"
+                  />
+                  <input
+                    name="phone"
+                    placeholder="Telefon"
+                    value={form.phone}
+                    onChange={handleChange}
+                    required
+                    className="input"
+                  />
+                  <input
+                    name="email"
+                    placeholder="E-posta"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="input"
+                  />
+                  <input
+                    name="address.line1"
+                    placeholder="Adres"
+                    value={form.address.line1}
+                    onChange={handleChange}
+                    required
+                    className="input"
+                  />
                 </div>
-
-                <textarea
-                  name="note"
-                  placeholder="Not (isteğe bağlı)"
-                  value={form.note}
-                  onChange={handleChange}
-                  className="input h-24"
-                />
               </div>
-            </div>
 
-            {/* Desktop butonu */}
-            <div className="hidden md:block">
-              <button
-                type="submit"
-                className="w-full py-4 px-6 rounded-full bg-primary text-white text-lg font-bold shadow-lg transition hover:bg-primary hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-              >
-                🚀
-                <span>Ödemeye Geç</span>
-              </button>
-            </div>
-          </form>
+              {/* Varyantlar */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                  <Layers className="w-5 h-5" /> Tişört Özellikleri
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(variantOptions).map(([type, options]) => (
+                    <select
+                      key={type}
+                      name={type}
+                      value={selectedVariant[type] || ""}
+                      onChange={handleVariantChange}
+                      className="input capitalize"
+                      required
+                    >
+                      <option value="">{type}</option>
+                      {options.map((opt, i) => (
+                        <option key={i} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ))}
+                </div>
+              </div>
+
+              {/* Adet + Not */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                  <ClipboardList className="w-5 h-5" /> Sipariş Detayları
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  <div className="flex items-center justify-between gap-4 border rounded-lg px-4 py-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      Adet
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        className="p-2 bg-gray-100 rounded hover:bg-gray-200"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-8 text-center font-semibold">
+                        {quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((q) => q + 1)}
+                        className="p-2 bg-gray-100 rounded hover:bg-gray-200"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <textarea
+                    name="note"
+                    placeholder="Not (isteğe bağlı)"
+                    value={form.note}
+                    onChange={handleChange}
+                    className="input h-24"
+                  />
+                </div>
+              </div>
+
+              {/* Desktop butonu */}
+              <div className="hidden md:block">
+                <button
+                  type="submit"
+                  className="relative overflow-hidden group w-full py-4 px-6 rounded-full bg-primary text-white text-lg font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {/* Parlayan animasyon efekti */}
+                  <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
+
+                  {/* Buton içeriği */}
+                  <span className="relative z-10 flex items-center gap-2">
+                    🚀 <span>Ödemeye Geç</span>
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -272,10 +289,15 @@ export default function CustomOrderPage() {
         <button
           type="submit"
           form="custom-order-form"
-          className="w-full max-w-md py-4 px-6 rounded-full bg-primary text-white text-lg font-bold shadow-xl transition hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+          className="relative overflow-hidden w-full max-w-md py-4 px-6 rounded-full bg-primary text-white text-lg font-bold shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
         >
-          🚀
-          <span>Ödemeye Geç</span>
+          {/* Parlayan efekt */}
+          <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/10 via-white/50 to-white/10 opacity-30 transform skew-x-[-20deg] animate-slide-shine z-0" />
+
+          {/* Buton içeriği */}
+          <span className="relative z-10 flex items-center gap-2">
+            🚀 <span>Ödemeye Geç</span>
+          </span>
         </button>
       </div>
     </>
