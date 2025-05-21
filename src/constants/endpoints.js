@@ -1,4 +1,5 @@
 export const ENDPOINTS = {
-  CATEGORIES: `/categories`,
+  CATEGORIES: "/categories",
   PRODUCTS: "/products",
+  VARIANT_OPTIONS: "/variant-options/public",
 };

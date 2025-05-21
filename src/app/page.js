@@ -1,20 +1,22 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchProducts } from '@/store/productSlice'
-import ProductCard from '@/components/ProductCard'
-import BannerSlider from '@/components/BannerSlider'
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProducts } from "@/store/productSlice";
+import { fetchVariantOptions } from "@/store/variantOptionsSlice";
+import ProductCard from "@/components/ProductCard";
+import BannerSlider from "@/components/BannerSlider";
 
 export default function HomePage() {
-  const dispatch = useDispatch()
-  const { items: products, loading } = useSelector((state) => state.product)
+  const dispatch = useDispatch();
+  const { items: products, loading } = useSelector((state) => state.product);
 
   useEffect(() => {
-    if (products.length === 0) dispatch(fetchProducts())
-  }, [dispatch, products])
+    if (products.length === 0) dispatch(fetchProducts());
+    dispatch(fetchVariantOptions());
+  }, [dispatch, products]);
 
-  if (loading) return <div className="p-4">Yükleniyor...</div>
+  if (loading) return <div className="p-4">Yükleniyor...</div>;
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -31,5 +33,5 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

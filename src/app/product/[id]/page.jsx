@@ -11,10 +11,21 @@ import { Minus, Plus } from 'lucide-react'
 export default function ProductDetailPage() {
   const { id } = useParams()
   const dispatch = useDispatch()
+
   const { items: products, loading } = useSelector((state) => state.product)
+  const { items: variantOptions } = useSelector((state) => state.variantOptions)
+
   const [product, setProduct] = useState(null)
+  const [selectedVariant, setSelectedVariant] = useState({
+    color: '',
+    size: '',
+    quality: '',
+    fit: '',
+  })
 
   const { items: cartItems, add, update, remove } = useCart()
+  const cartItem = cartItems.find((item) => item.id === id)
+  const quantity = cartItem?.qty || 0
 
   useEffect(() => {
     if (products.length === 0) {
@@ -33,10 +44,16 @@ export default function ProductDetailPage() {
   const discount = variant?.discount || 0
   const finalPrice = discount ? price - (price * discount) / 100 : price
 
-  const cartItem = cartItems.find((item) => item.id === product._id)
-  const quantity = cartItem?.qty || 0
+  const isVariantSelected = Object.values(selectedVariant).every(Boolean)
+
+  const handleVariantChange = (e) => {
+    const { name, value } = e.target
+    setSelectedVariant((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleAdd = () => {
+    if (!isVariantSelected) return
+
     if (quantity > 0) {
       update(product._id, quantity + 1)
     } else {
@@ -46,6 +63,7 @@ export default function ProductDetailPage() {
         image,
         price: finalPrice,
         qty: 1,
+        selectedVariant,
       })
       toast.success('Ürün sepete eklendi!')
     }
@@ -77,7 +95,7 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        {/* Ürün Bilgileri + Buton */}
+        {/* Ürün Bilgileri + Variant + Sepet */}
         <div className="flex flex-col justify-between h-full">
           <div className="space-y-5">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -97,6 +115,33 @@ export default function ProductDetailPage() {
                 {finalPrice.toFixed(2)}₺
               </span>
             </div>
+
+            {/* Varyant Seçimleri */}
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(variantOptions).map(([type, options]) => (
+                <div key={type} className="flex flex-col space-y-1">
+                  <label
+                    htmlFor={type}
+                    className="text-sm font-medium capitalize text-gray-700"
+                  >
+                    {type}
+                  </label>
+                  <select
+                    name={type}
+                    value={selectedVariant[type]}
+                    onChange={handleVariantChange}
+                    className="input"
+                  >
+                    <option value="">Seçiniz</option>
+                    {options.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Sepet Kontrolleri */}
@@ -114,7 +159,12 @@ export default function ProductDetailPage() {
             ) : (
               <button
                 onClick={handleAdd}
-                className="w-full bg-primary text-white py-4 rounded-xl text-lg font-semibold shadow-md transition duration-300 ease-in-out hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg"
+                disabled={!isVariantSelected}
+                className={`w-full py-4 rounded-xl text-lg font-semibold shadow-md transition duration-300 ease-in-out ${
+                  isVariantSelected
+                    ? 'bg-primary text-white hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 Sepete Ekle
               </button>

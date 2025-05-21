@@ -39,36 +39,57 @@ export default function CartPage() {
         {items.map((item) => (
           <div
             key={item.id}
-            className="flex gap-4 items-center border p-4 rounded-lg shadow-sm"
+            className="flex flex-col md:flex-row gap-4 border p-4 rounded-2xl shadow-sm"
           >
             <img
               src={item.image || '/placeholder.png'}
               alt={item.name}
-              className="w-20 h-20 object-cover rounded-md"
+              className="w-24 h-24 object-cover rounded-lg self-center"
             />
-            <div className="flex-1">
-              <h2 className="font-semibold text-gray-900">{item.name}</h2>
-              <p className="text-sm text-gray-500">
-                Birim Fiyat: {item.price.toFixed(2)}₺
-              </p>
-              <div className="flex items-center gap-2 mt-2">
+            <div className="flex-1 flex flex-col justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {item.name}
+                </h2>
+                <p className="text-sm text-gray-500 mb-2">
+                  Birim Fiyat: {item.price.toFixed(2)}₺
+                </p>
+
+                {/* Varyantlar */}
+                {item.selectedVariant && (
+                  <div className="grid grid-cols-2 gap-1 text-sm text-gray-600">
+                    {Object.entries(item.selectedVariant).map(
+                      ([key, value]) => (
+                        <div key={key} className="capitalize">
+                          <span className="font-medium">{key}:</span> {value}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Adet Kontrol */}
+              <div className="flex items-center gap-2 mt-4">
                 <button
                   onClick={() => handleQtyChange(item.id, item.qty - 1)}
-                  className="bg-primary text-white p-1 rounded-full"
+                  className="bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="text-sm font-medium">{item.qty}</span>
                 <button
                   onClick={() => handleQtyChange(item.id, item.qty + 1)}
-                  className="bg-primary text-white p-1 rounded-full"
+                  className="bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <span className="font-semibold text-primary">
+
+            {/* Fiyat ve Sil */}
+            <div className="flex flex-col items-end justify-between">
+              <span className="text-primary font-bold text-lg">
                 {(item.price * item.qty).toFixed(2)}₺
               </span>
               <button
@@ -78,7 +99,7 @@ export default function CartPage() {
                 }}
                 className="text-red-500 hover:text-red-700 transition"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
           </div>
