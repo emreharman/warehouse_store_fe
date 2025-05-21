@@ -14,7 +14,7 @@ import {
   Minus,
   Plus,
   Rocket,
-  Upload
+  Upload,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -51,6 +51,29 @@ export default function CustomOrderPage() {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
+  const agreementLinks = [
+    {
+      title: "Ön Bilgilendirme Formu",
+      url: "https://vggwhpplgaemfxehakka.supabase.co/storage/v1/object/public/warehouse//2_On_Bilgilendirme_Formu.pdf",
+    },
+    {
+      title: "Mesafeli Satış Sözleşmesi",
+      url: "https://vggwhpplgaemfxehakka.supabase.co/storage/v1/object/public/warehouse//1_Mesafeli_Satis_Sozlesmesi.pdf",
+    },
+    {
+      title: "KVKK Politikası",
+      url: "https://vggwhpplgaemfxehakka.supabase.co/storage/v1/object/public/warehouse//3_KVKK_Politikasi.pdf",
+    },
+  ];
+
+  const [agreementsAccepted, setAgreementsAccepted] = useState(
+    Object.fromEntries(agreementLinks.map((doc) => [doc.title, false]))
+  );
+  const [selectedAgreementUrl, setSelectedAgreementUrl] = useState(null);
+
+  const allAgreementsAccepted =
+    Object.values(agreementsAccepted).every(Boolean);
+
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -85,14 +108,19 @@ export default function CustomOrderPage() {
     const { name, value } = e.target;
     setSelectedVariant((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleFileChange = (e) => {
     setFiles(Array.from(e.target.files));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setUploading(true);
+    if (!allAgreementsAccepted) {
+      toast.error("Lütfen tüm sözleşmeleri onaylayın.");
+      return;
+    }
 
+    setUploading(true);
     let designFiles = [];
 
     try {
@@ -154,6 +182,9 @@ export default function CustomOrderPage() {
       setSelectedVariant({ color: "", size: "", quality: "", fit: "" });
       setQuantity(1);
       setFiles([]);
+      setAgreementsAccepted(
+        Object.fromEntries(agreementLinks.map((doc) => [doc.title, false]))
+      );
     } catch (err) {
       toast.error("Sipariş oluşturulamadı.");
     } finally {
@@ -319,16 +350,88 @@ export default function CustomOrderPage() {
                 )}
               </div>
 
-              {/* Desktop butonu */}
+              {/* Sözleşme kutuları */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Sözleşmeler
+                </h2>
+                {agreementLinks.map((doc) => (
+                  <div key={doc.title} className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={agreementsAccepted[doc.title]}
+                      onChange={(e) =>
+                        setAgreementsAccepted((prev) => ({
+                          ...prev,
+                          [doc.title]: e.target.checked,
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                    <div className="text-sm text-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAgreementUrl(doc.url)}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {doc.title}
+                      </button>{" "}
+                      belgesini okudum ve kabul ediyorum.
+                    </div>
+                  </div>
+                ))}
+                {!allAgreementsAccepted && (
+                  <p className="text-red-500 text-sm">
+                    Sipariş verebilmek için tüm sözleşmeleri onaylamanız
+                    gerekir.
+                  </p>
+                )}
+              </div>
+
+              {/* Sözleşme Modalı */}
+              {selectedAgreementUrl && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
+                  <div className="bg-white max-w-3xl w-full rounded-xl overflow-hidden shadow-lg">
+                    <div className="flex justify-between items-center p-4 border-b">
+                      <h2 className="text-lg font-bold">Sözleşme Önizleme</h2>
+                      <button
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={() => setSelectedAgreementUrl(null)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="p-4 max-h-[75vh] overflow-y-auto">
+                      <iframe
+                        src={selectedAgreementUrl}
+                        title="Sözleşme PDF"
+                        className="w-full h-[60vh] border rounded"
+                      />
+                    </div>
+                    <div className="p-4 border-t text-right">
+                      <button
+                        onClick={() => setSelectedAgreementUrl(null)}
+                        className="bg-primary text-white font-semibold px-5 py-2 rounded-full hover:bg-primary-dark transition"
+                      >
+                        Kapat
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Desktop buton */}
               <div className="hidden md:block">
                 <button
                   type="submit"
-                  className="relative overflow-hidden group w-full py-4 px-6 rounded-full bg-primary text-white text-lg font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                  disabled={!allAgreementsAccepted || uploading}
+                  className={`relative overflow-hidden group w-full py-4 px-6 rounded-full ${
+                    allAgreementsAccepted
+                      ? "bg-primary text-white"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  } text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
                 >
-                  {/* Parlayan animasyon efekti */}
                   <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-
-                  {/* Buton içeriği */}
                   <span className="relative z-10 flex items-center gap-2">
                     🚀 <span>Ödemeye Geç</span>
                   </span>
@@ -344,12 +447,14 @@ export default function CustomOrderPage() {
         <button
           type="submit"
           form="custom-order-form"
-          className="relative overflow-hidden w-full max-w-md py-4 px-6 rounded-full bg-primary text-white text-lg font-bold shadow-xl transition active:scale-95 flex items-center justify-center gap-2"
+          disabled={!allAgreementsAccepted || uploading}
+          className={`relative overflow-hidden w-full max-w-md py-4 px-6 rounded-full ${
+            allAgreementsAccepted
+              ? "bg-primary text-white"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          } text-lg font-bold shadow-xl transition active:scale-95 flex items-center justify-center gap-2`}
         >
-          {/* Parlayan efekt */}
           <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/10 via-white/50 to-white/10 opacity-30 transform skew-x-[-20deg] animate-slide-shine z-0" />
-
-          {/* Buton içeriği */}
           <span className="relative z-10 flex items-center gap-2">
             🚀 <span>Ödemeye Geç</span>
           </span>
