@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "@/lib/api";
 import { toast } from "react-hot-toast";
 import {
@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/lib/supabase";
 
 export default function CustomOrderPage() {
+  const fileInputRef = useRef(null);
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -74,6 +75,42 @@ export default function CustomOrderPage() {
   const allAgreementsAccepted =
     Object.values(agreementsAccepted).every(Boolean);
 
+  const [designConfig, setDesignConfig] = useState({
+    side: "front", // front | back
+    size: "medium", // small | medium | large
+    position: "center", // topLeft | center | topRight
+  });
+  const [showDesignModal, setShowDesignModal] = useState(false);
+
+  function getSizeStyle(size) {
+    switch (size) {
+      case "small":
+        return "w-16 h-16";
+      case "medium":
+        return "w-28 h-28";
+      case "large":
+        return "w-40 h-40";
+      default:
+        return "";
+    }
+  }
+
+  const handleCancel = (indexToRemove) => {
+    setFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
+    setShowDesignModal(false);
+
+    // input elementini resetle
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  useEffect(() => {
+    if (files.length > 0) {
+      setShowDesignModal(true);
+    }
+  }, [files]);
+
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -110,7 +147,12 @@ export default function CustomOrderPage() {
   };
 
   const handleFileChange = (e) => {
-    setFiles(Array.from(e.target.files));
+    const newFiles = Array.from(e.target.files);
+
+    if (newFiles.length > 0) {
+      setFiles(newFiles);
+      setShowDesignModal(true); // direkt aç
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -335,6 +377,8 @@ export default function CustomOrderPage() {
                   multiple
                   onChange={handleFileChange}
                   className="input"
+                  ref={fileInputRef}
+                  key={files.length}
                 />
                 {files.length > 0 && (
                   <div className="flex flex-wrap gap-4">
@@ -460,6 +504,155 @@ export default function CustomOrderPage() {
           </span>
         </button>
       </div>
+      {showDesignModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-2xl rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
+            <h2 className="text-xl font-bold text-center">Baskı Ayarları</h2>
+            {/* Kontroller */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label
+                  htmlFor="side"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Baskı Yüzü
+                </label>
+                <select
+                  id="side"
+                  className="input"
+                  value={designConfig.side}
+                  onChange={(e) =>
+                    setDesignConfig((prev) => ({
+                      ...prev,
+                      side: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="front">Ön Yüz</option>
+                  <option value="back">Arka Yüz</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <label
+                  htmlFor="size"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Baskı Boyutu
+                </label>
+                <select
+                  id="size"
+                  className="input"
+                  value={designConfig.size}
+                  onChange={(e) =>
+                    setDesignConfig((prev) => ({
+                      ...prev,
+                      size: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="small">Küçük</option>
+                  <option value="medium">Orta</option>
+                  <option value="large">Büyük</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <label
+                  htmlFor="position"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Baskı Konumu
+                </label>
+                <select
+                  id="position"
+                  className="input"
+                  value={designConfig.position}
+                  onChange={(e) =>
+                    setDesignConfig((prev) => ({
+                      ...prev,
+                      position: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="topLeft">Sol Üst</option>
+                  <option value="center">Orta</option>
+                  <option value="topRight">Sağ Üst</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Önizleme */}
+            <div className="relative w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+              <img
+                src={`/tshirt-${designConfig.side}.png`}
+                alt="Tişört"
+                className="w-auto h-full object-contain"
+              />
+              {files[0] && (
+                <img
+                  src={URL.createObjectURL(files[0])}
+                  alt="Tasarım"
+                  className={`absolute ${getSizeStyle(
+                    designConfig.size
+                  )} transition-all`}
+                  style={{
+                    top:
+                      designConfig.position === "topLeft" ||
+                      designConfig.position === "topRight"
+                        ? window.innerWidth < 768
+                          ? "20%"
+                          : "25%"
+                        : "50%",
+                    left:
+                      designConfig.position === "topLeft"
+                        ? window.innerWidth < 768
+                          ? "25%"
+                          : "35%"
+                        : designConfig.position === "topRight"
+                        ? undefined
+                        : "50%",
+                    right:
+                      designConfig.position === "topRight"
+                        ? window.innerWidth < 768
+                          ? "25%"
+                          : "35%"
+                        : undefined,
+                    transform:
+                      designConfig.position === "center"
+                        ? "translate(-50%, -50%)"
+                        : "translate(0%, 0%)",
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Dipnot */}
+            <p className="text-sm text-gray-600 text-center italic px-2">
+              Buradaki deneyim sizlere fikir vermesi açısındandır. Detaylı
+              isteğinizi <strong>Sipariş Notları</strong> sekmesinde
+              açıklayınız. Baskı ekibimiz tecrübesini de ortaya koyarak
+              istediğiniz baskıyı size ulaştıracaktır.
+            </p>
+
+            {/* Butonlar */}
+            <div className="text-center">
+              <button
+                onClick={() => handleCancel(0)}
+                className="px-4 py-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 mr-4"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={() => setShowDesignModal(false)}
+                className="bg-primary text-white px-6 py-2 rounded-full font-semibold"
+              >
+                Onayla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
