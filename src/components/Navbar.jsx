@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, User } from "lucide-react";
 import { fetchCategories } from "@/store/categorySlice";
 import { toTitleCase } from "@/utils/format";
 
@@ -14,6 +14,7 @@ export default function Navbar() {
 
   const { items: categories } = useSelector((state) => state.category);
   const cartItems = useSelector((state) => state?.cart?.items || []);
+  const { customer } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (!categories || categories.length === 0) {
@@ -85,8 +86,9 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Sağ: Sepet */}
-        <div className="relative">
+        {/* Sağ: Sepet ve Login */}
+        <div className="flex items-center gap-6">
+          {/* Sepet */}
           <Link
             href="/cart"
             className="text-gray-700 hover:text-primary transition relative"
@@ -95,6 +97,14 @@ export default function Navbar() {
             <span className="absolute -top-2 -right-2 bg-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">
               {cartItems.length}
             </span>
+          </Link>
+
+          {/* Login */}
+          <Link
+            href={customer ? "/profile" : "/user"}
+            className="text-gray-700 hover:text-primary transition relative"
+          >
+            <User className="w-6 h-6" />
           </Link>
         </div>
       </div>
