@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Minus, Plus } from 'lucide-react'
-import { useCart } from '@/hooks/useCart'
+import { useCart } from '../hooks/useCart'
 import { toast } from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
 

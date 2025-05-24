@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchProducts } from "@/store/productSlice";
-import { fetchVariantOptions } from "@/store/variantOptionsSlice";
-import ProductCard from "@/components/ProductCard";
-import BannerSlider from "@/components/BannerSlider";
+import { fetchProducts } from "../store/productSlice";
+import { fetchVariantOptions } from "../store/variantOptionsSlice";
+import ProductCard from "../components/ProductCard";
+import BannerSlider from "../components/BannerSlider";
 
 export default function HomePage() {
   const dispatch = useDispatch();

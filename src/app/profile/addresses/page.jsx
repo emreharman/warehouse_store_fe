@@ -7,7 +7,7 @@ import {
   deleteCustomerAddress,
   getCustomerProfile,
   updateCustomerAddress,
-} from "@/store/authSlice";
+} from "../../../store/authSlice";
 import { Plus, Trash, Pencil, Home, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 

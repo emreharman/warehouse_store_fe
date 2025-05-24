@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { ShoppingCart, User } from "lucide-react";
-import { fetchCategories } from "@/store/categorySlice";
-import { toTitleCase } from "@/utils/format";
+import { fetchCategories } from "../store/categorySlice";
+import { toTitleCase } from "../utils/format";
 
 export default function Navbar() {
   const pathname = usePathname();

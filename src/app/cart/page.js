@@ -1,6 +1,6 @@
 'use client'
 
-import { useCart } from '@/hooks/useCart'
+import { useCart } from '../../hooks/useCart'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'react-hot-toast'

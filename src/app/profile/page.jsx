@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { UserCog, Lock, MapPin, PackageSearch } from "lucide-react";
-import { useCustomerAuthRedirect } from '@/hooks/useCustomerAuthRedirect'
+import { useCustomerAuthRedirect } from '../../hooks/useCustomerAuthRedirect'
 
 const menuItems = [
   {

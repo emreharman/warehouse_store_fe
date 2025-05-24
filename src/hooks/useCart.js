@@ -7,7 +7,7 @@ import {
   removeFromCart,
   updateQty,
   clearCart
-} from '@/store/cartSlice'
+} from '../store/cartSlice'
 
 export function useCart() {
   const dispatch = useDispatch()

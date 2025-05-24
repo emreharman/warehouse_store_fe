@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getCustomerProfile, updateCustomerProfile } from "@/store/authSlice";
+import { getCustomerProfile, updateCustomerProfile } from "../../../store/authSlice";
 import { toast } from "react-hot-toast";
 import { Save, User, Mail, Phone } from "lucide-react";
 

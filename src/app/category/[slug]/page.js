@@ -3,8 +3,8 @@
 import { useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchProducts } from '@/store/productSlice'
-import ProductCard from '@/components/ProductCard'
+import { fetchProducts } from '../../../store/productSlice'
+import ProductCard from '../../../components/ProductCard'
 
 export default function CategoryPage() {
   const { slug } = useParams()

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { LogIn, UserPlus, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-import { loginUser, registerUser } from "@/store/authSlice";
+import { loginUser, registerUser } from "../../store/authSlice";
 import { toast } from "react-hot-toast";
 
 export default function AuthPage() {

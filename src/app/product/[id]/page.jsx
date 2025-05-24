@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useSelector, useDispatch } from 'react-redux'
-import { fetchProducts } from '@/store/productSlice'
-import { useCart } from '@/hooks/useCart'
+import { fetchProducts } from '../../../store/productSlice'
+import { useCart } from '../../../hooks/useCart'
 import { toast } from 'react-hot-toast'
 import { Minus, Plus } from 'lucide-react'
 
