@@ -41,11 +41,11 @@ export default function ProfilePage() {
       href: "/profile/addresses",
       icon: <MapPin className="text-primary-600 w-6 h-6" />,
     },
-    {
+    /* {
       title: "Şifre Değiştir",
       href: "/profile/change-password",
       icon: <Lock className="text-primary-600 w-6 h-6" />,
-    },
+    }, */
     {
       title: "Çıkış Yap",
       href: null,
