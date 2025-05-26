@@ -36,6 +36,7 @@ export default function CustomOrderPage() {
   const [uploading, setUploading] = useState(false);
   const [showDesignModal, setShowDesignModal] = useState(false);
   const [finalDesignDataUrl, setFinalDesignDataUrl] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [form, setForm] = useState({
     name: customer?.name,
     phone: customer?.phone,
@@ -95,28 +96,38 @@ export default function CustomOrderPage() {
     position: "center", // topLeft | center | topRight
   });
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Mouse hareketini belge üzerinde dinle
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging || !dragRef.current) return;
-  
+
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  
+
       const container = dragRef.current.parentElement.getBoundingClientRect();
       const designWidth = dragRef.current.offsetWidth;
       const designHeight = dragRef.current.offsetHeight;
-  
+
       const PRINT_AREA = {
-        top: 50,
-        left: 210,
-        width: 200,
-        height: 200,
+        top: isMobile ? 80 : 50,
+        left: isMobile ? 80 : 210,
+        width: isMobile ? 150 : 200,
+        height: isMobile ? 150 : 200,
       };
-  
+
       let newX = clientX - container.left - designWidth / 2;
       let newY = clientY - container.top - designHeight / 2;
-  
+
       newX = Math.max(
         PRINT_AREA.left,
         Math.min(newX, PRINT_AREA.left + PRINT_AREA.width - designWidth)
@@ -125,24 +136,26 @@ export default function CustomOrderPage() {
         PRINT_AREA.top,
         Math.min(newY, PRINT_AREA.top + PRINT_AREA.height - designHeight)
       );
-  
+
       setDragPosition({ x: newX, y: newY });
     };
-  
+
     const handleMouseUp = () => setIsDragging(false);
-  
+
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
-  
-      document.addEventListener("touchmove", handleMouseMove, { passive: false });
+
+      document.addEventListener("touchmove", handleMouseMove, {
+        passive: false,
+      });
       document.addEventListener("touchend", handleMouseUp);
     }
-  
+
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-  
+
       document.removeEventListener("touchmove", handleMouseMove);
       document.removeEventListener("touchend", handleMouseUp);
     };
@@ -155,10 +168,10 @@ export default function CustomOrderPage() {
         const designHeight = dragRef.current.offsetHeight;
 
         const PRINT_AREA = {
-          top: 50,
-          left: 210,
-          width: 200,
-          height: 200,
+          top: isMobile ? 80 : 50,
+          left: isMobile ? 80 : 210,
+          width: isMobile ? 150 : 200,
+          height: isMobile ? 150 : 200,
         };
 
         const centerX =
@@ -790,10 +803,10 @@ export default function CustomOrderPage() {
               <div
                 className="absolute border-2 border-red-500"
                 style={{
-                  top: 50,
-                  left: 210,
-                  width: 200,
-                  height: 200,
+                  top: isMobile ? 80 : 50,
+                  left: isMobile ? 80 : 210,
+                  width: isMobile ? 150 : 200,
+                  height: isMobile ? 150 : 200,
                   pointerEvents: "none",
                 }}
               ></div>
