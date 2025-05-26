@@ -38,11 +38,12 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Sol: Logo ve Kategoriler */}
         <div className="flex items-center gap-10">
-          <Link
-            href="/"
-            className="text-2xl font-extrabold tracking-tight text-primary"
-          >
-            <span className="text-accent">Gen</span>.Y
+          <Link href="/" className="flex items-center">
+            <img
+              src="/logo.png"
+              alt="Modtee Logo"
+              style={{ height: "50px", width: "auto", objectFit: "contain" }}
+            />
           </Link>
 
           {/* Desktop Kategoriler */}

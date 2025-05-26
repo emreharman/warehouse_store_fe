@@ -3,8 +3,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#2563EB",
-        accent: "#F59E0B",
+        primary: "#103C4F",
+        accent: "#F47C2C",
       },
       keyframes: {
         "slide-shine": {

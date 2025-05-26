@@ -27,7 +27,7 @@ export default function StickyCustomTeeButton() {
       <div className="hidden md:block fixed bottom-6 right-6 z-50">
         <Link
           href="/custom"
-          className="flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-full shadow-xl text-base font-semibold hover:bg-yellow-500 hover:scale-105 transition-all duration-300"
+          className="flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-full shadow-xl text-base font-semibold hover:scale-105 transition-all duration-300"
         >
           <Sparkles className="w-5 h-5" />
           Kendi Tişörtünü Tasarla

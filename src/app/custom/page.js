@@ -264,10 +264,24 @@ export default function CustomOrderPage() {
 
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files);
+    const MAX_SIZE_MB = 5;
 
-    if (newFiles.length > 0) {
-      setFiles(newFiles);
-      setShowDesignModal(true); // direkt aç
+    const validFiles = newFiles.filter((file) => {
+      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        toast.error(`${file.name} dosyası ${MAX_SIZE_MB}MB sınırını aşıyor.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 0) {
+      setFiles(validFiles);
+      setShowDesignModal(true);
+    }
+
+    // input resetlenmeli ki aynı dosya tekrar seçilebilsin
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -315,9 +329,10 @@ export default function CustomOrderPage() {
           },
         ],
         note: form.note,
-        totalPrice: 450, //endpointten gelmeli
+        totalPrice: 450 * quantity, //endpointten gelmeli
         paymentStatus: "pre-payment",
       };
+      console.log("payload", payload);
 
       //await api.post("/orders", payload);
       toast.success("Sipariş başarıyla oluşturuldu!");
@@ -431,12 +446,15 @@ export default function CustomOrderPage() {
                     <input
                       type="file"
                       accept="image/*"
-                      multiple
                       onChange={handleFileChange}
                       className="input"
                       ref={fileInputRef}
                       key={files.length}
                     />
+                    <p className="text-sm text-gray-500">
+                      Maksimum dosya boyutu: <strong>5MB</strong>. Yalnızca
+                      görsel formatları desteklenir.
+                    </p>
                     {files.length > 0 && (
                       <div className="flex flex-wrap gap-4">
                         {files.map((file, i) => (
