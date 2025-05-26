@@ -16,6 +16,7 @@ import {
   Plus,
   Rocket,
   Upload,
+  MapPin,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import html2canvas from "html2canvas";
@@ -27,6 +28,7 @@ export default function CustomOrderPage() {
   const designAreaRef = useRef(null);
 
   const { customer } = useSelector((state) => state.auth);
+  console.log("customer", customer);
 
   const [step, setStep] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -313,8 +315,8 @@ export default function CustomOrderPage() {
           },
         ],
         note: form.note,
-        totalPrice: 0,
-        paymentStatus: "pending",
+        totalPrice: 450, //endpointten gelmeli
+        paymentStatus: "pre-payment",
       };
 
       //await api.post("/orders", payload);
@@ -493,6 +495,7 @@ export default function CustomOrderPage() {
                     <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
                       <User className="w-5 h-5" /> Müşteri Bilgileri
                     </h2>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <input
                         name="name"
@@ -517,17 +520,87 @@ export default function CustomOrderPage() {
                         onChange={handleChange}
                         className="input"
                       />
+                    </div>
+
+                    <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700 mt-6">
+                      <MapPin className="w-5 h-5" /> Adres Bilgileri
+                    </h2>
+
+                    {Array.isArray(customer?.addresses) &&
+                      customer.addresses.length > 0 && (
+                        <div className="flex gap-3 overflow-x-auto py-2 scrollbar-hide">
+                          {customer.addresses.map((addr, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  address: {
+                                    label: addr.label || "Ev",
+                                    line1: addr.line1 || "",
+                                    city: addr.city || "",
+                                    postalCode: addr.postalCode || "",
+                                    country: addr.country || "Türkiye",
+                                  },
+                                }))
+                              }
+                              className="flex-shrink-0 px-4 py-2 border rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition whitespace-nowrap"
+                            >
+                              {addr.label} - {addr.line1}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <select
+                        name="address.label"
+                        value={form.address.label}
+                        onChange={handleChange}
+                        required
+                        className="input"
+                      >
+                        <option value="Ev">Ev</option>
+                        <option value="İş">İş</option>
+                        <option value="Diğer">Diğer</option>
+                      </select>
+
                       <input
                         name="address.line1"
-                        placeholder="Adres"
+                        placeholder="Adres (Sokak, Mahalle, No, vb.)"
                         value={form.address.line1}
+                        onChange={handleChange}
+                        required
+                        className="input"
+                      />
+                      <input
+                        name="address.city"
+                        placeholder="Şehir"
+                        value={form.address.city}
+                        onChange={handleChange}
+                        required
+                        className="input"
+                      />
+                      <input
+                        name="address.postalCode"
+                        placeholder="Posta Kodu"
+                        value={form.address.postalCode}
+                        onChange={handleChange}
+                        className="input"
+                      />
+                      <input
+                        name="address.country"
+                        placeholder="Ülke"
+                        value={form.address.country}
                         onChange={handleChange}
                         required
                         className="input"
                       />
                     </div>
                   </div>
-                  <div className="flex gap-5">
+
+                  <div className="flex flex-col md:flex-row gap-4">
                     <button
                       type="button"
                       onClick={() => setStep(0)}
@@ -537,9 +610,21 @@ export default function CustomOrderPage() {
                     </button>
                     <button
                       type="button"
-                      disabled={!form.name || !form.email || !form.phone}
+                      disabled={
+                        !form.name ||
+                        !form.email ||
+                        !form.phone ||
+                        !form.address.label ||
+                        !form.address.city ||
+                        !form.address.country ||
+                        !form.address.line1
+                      }
                       onClick={() => setStep(2)}
-                      className="w-full py-4 px-6 rounded-full bg-primary text-white font-semibold hover:bg-primary/90 transition"
+                      className={`w-full py-4 px-6 rounded-full font-semibold transition ${
+                        !form.name || !form.email || !form.phone
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-primary text-white hover:bg-primary/90"
+                      }`}
                     >
                       Ödemeye Geç
                     </button>
@@ -549,6 +634,53 @@ export default function CustomOrderPage() {
               {step === 2 && (
                 <>
                   <div className="space-y-8">
+                    {/* Sipariş Özeti */}
+                    <div className="space-y-4 border p-4 rounded-xl bg-gray-50">
+                      <h2 className="text-lg font-semibold text-gray-700">
+                        Sipariş Özeti
+                      </h2>
+                      <div className="flex items-center gap-4">
+                        {/* Tasarım Görseli */}
+                        {finalDesignDataUrl && (
+                          <img
+                            src={finalDesignDataUrl}
+                            alt="Final Design"
+                            className="w-20 h-20 object-cover rounded border"
+                          />
+                        )}
+
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-800 font-medium">
+                            Özel Tişört
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Renk: <strong>{selectedVariant.color}</strong>,
+                            Beden: <strong>{selectedVariant.size}</strong>,
+                            Kalite: <strong>{selectedVariant.quality}</strong>,
+                            Kalıp: <strong>{selectedVariant.fit}</strong>
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Adet: {quantity}
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-gray-800">
+                            {450 * quantity}₺
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="border-t pt-4 flex justify-between">
+                        <span className="font-medium text-gray-700">
+                          Toplam Tutar
+                        </span>
+                        <span className="text-lg font-bold text-primary">
+                          {450 * quantity}₺
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Kredi Kartı Bilgileri */}
                     <div className="space-y-4">
                       <h2 className="text-lg font-semibold text-gray-700">
