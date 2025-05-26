@@ -18,11 +18,23 @@ import {
   Upload,
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import html2canvas from "html2canvas";
 
 export default function CustomOrderPage() {
   const fileInputRef = useRef(null);
-  const { customer, loading, token } = useSelector((state) => state.auth);
+  const dragRef = useRef(null);
+  const designAreaRef = useRef(null);
+
+  const { customer } = useSelector((state) => state.auth);
+
   const [step, setStep] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 150, y: 150 });
+  const [imageAspectRatio, setImageAspectRatio] = useState(1);
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [showDesignModal, setShowDesignModal] = useState(false);
+  const [finalDesignDataUrl, setFinalDesignDataUrl] = useState(null);
   const [form, setForm] = useState({
     name: customer?.name,
     phone: customer?.phone,
@@ -52,8 +64,6 @@ export default function CustomOrderPage() {
   });
 
   const [quantity, setQuantity] = useState(1);
-  const [files, setFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
 
   const agreementLinks = [
     {
@@ -83,18 +93,99 @@ export default function CustomOrderPage() {
     size: "medium", // small | medium | large
     position: "center", // topLeft | center | topRight
   });
-  const [showDesignModal, setShowDesignModal] = useState(false);
+
+  // Mouse hareketini belge üzerinde dinle
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging || !dragRef.current) return;
+
+      const container = dragRef.current.parentElement.getBoundingClientRect();
+      const designWidth = dragRef.current.offsetWidth;
+      const designHeight = dragRef.current.offsetHeight;
+
+      const PRINT_AREA = {
+        top: 50,
+        left: 210,
+        width: 200,
+        height: 200,
+      };
+
+      let newX = e.clientX - container.left - designWidth / 2;
+      let newY = e.clientY - container.top - designHeight / 2;
+
+      newX = Math.max(
+        PRINT_AREA.left,
+        Math.min(newX, PRINT_AREA.left + PRINT_AREA.width - designWidth)
+      );
+      newY = Math.max(
+        PRINT_AREA.top,
+        Math.min(newY, PRINT_AREA.top + PRINT_AREA.height - designHeight)
+      );
+
+      setDragPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false); // 🔥 Bırakıldığında durdur
+    };
+
+    // Listener'ları sadece dragging açıkken ekle
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
+  useEffect(() => {
+    if (showDesignModal && dragRef.current) {
+      setTimeout(() => {
+        const designWidth = dragRef.current.offsetWidth;
+        const designHeight = dragRef.current.offsetHeight;
+
+        const PRINT_AREA = {
+          top: 50,
+          left: 210,
+          width: 200,
+          height: 200,
+        };
+
+        const centerX =
+          PRINT_AREA.left +
+          (PRINT_AREA.width - dragRef.current.offsetWidth) / 2;
+        const centerY =
+          PRINT_AREA.top +
+          (PRINT_AREA.height - dragRef.current.offsetHeight) / 2;
+
+        setDragPosition({ x: centerX, y: centerY });
+      }, 0);
+    }
+  }, [showDesignModal, designConfig.size, files]);
+  const captureFinalDesign = async () => {
+    if (!designAreaRef.current) return;
+    const canvas = await html2canvas(designAreaRef.current);
+    const dataUrl = canvas.toDataURL("image/png");
+    setFinalDesignDataUrl(dataUrl);
+    return dataUrl;
+  };
+  const maxSize =
+    {
+      small: 64,
+      medium: 112,
+      large: 160,
+    }[designConfig.size] || 112;
 
   function getSizeStyle(size) {
-    switch (size) {
-      case "small":
-        return "w-16 h-16";
-      case "medium":
-        return "w-28 h-28";
-      case "large":
-        return "w-40 h-40";
-      default:
-        return "";
+    if (imageAspectRatio >= 1) {
+      // yatay görsel
+      return `w-[${maxSize}px] h-[${Math.round(maxSize / imageAspectRatio)}px]`;
+    } else {
+      // dikey görsel
+      return `h-[${maxSize}px] w-[${Math.round(maxSize * imageAspectRatio)}px]`;
     }
   }
 
@@ -160,11 +251,6 @@ export default function CustomOrderPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!allAgreementsAccepted) {
-      toast.error("Lütfen tüm sözleşmeleri onaylayın.");
-      return;
-    }
-
     setUploading(true);
     let designFiles = [];
 
@@ -179,59 +265,33 @@ export default function CustomOrderPage() {
         const url = supabase.storage.from("designs").getPublicUrl(data.path);
         designFiles.push(url.data.publicUrl);
       }
-    } catch (error) {
-      toast.error("Dosya yüklenemedi.");
-      setUploading(false);
-      return;
-    }
 
-    const payload = {
-      customer: {
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        addresses: [form.address],
-      },
-      type: "custom",
-      items: [
-        {
-          selectedVariant: {
-            ...selectedVariant,
-            price: 0,
-            discount: 0,
+      const finalImage = await captureFinalDesign();
+
+      const payload = {
+        customer: form,
+        type: "custom",
+        items: [
+          {
+            selectedVariant: {},
+            quantity: 1,
+            designFiles,
+            designMeta: {
+              ...designConfig,
+              pixelPosition: dragPosition,
+              fileName: files[0]?.name,
+              finalDesign: finalImage,
+            },
           },
-          quantity,
-          designFiles,
-        },
-      ],
-      note: form.note,
-      totalPrice: 0,
-    };
+        ],
+        note: form.note,
+        totalPrice: 0,
+      };
 
-    try {
       await api.post("/orders", payload);
       toast.success("Sipariş başarıyla oluşturuldu!");
-      setForm({
-        name: "",
-        phone: "",
-        email: "",
-        address: {
-          label: "Ev",
-          line1: "",
-          city: "",
-          postalCode: "",
-          country: "Türkiye",
-        },
-        note: "",
-      });
-      setSelectedVariant({ color: "", size: "", quality: "", fit: "" });
-      setQuantity(1);
-      setFiles([]);
-      setAgreementsAccepted(
-        Object.fromEntries(agreementLinks.map((doc) => [doc.title, false]))
-      );
     } catch (err) {
-      toast.error("Sipariş oluşturulamadı.");
+      toast.error("Hata oluştu");
     } finally {
       setUploading(false);
     }
@@ -358,17 +418,41 @@ export default function CustomOrderPage() {
                         ))}
                       </div>
                     )}
+                    {finalDesignDataUrl && (
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Tasarım Önizleme:
+                        </p>
+                        <img
+                          src={finalDesignDataUrl}
+                          alt="Final Design"
+                          className="w-48 border rounded shadow"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className={`relative overflow-hidden group w-full bg-primary text-white py-4 px-6 rounded-full  text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
+                      disabled={
+                        !selectedVariant.color ||
+                        !selectedVariant.fit ||
+                        !selectedVariant.quality ||
+                        !selectedVariant.size ||
+                        !files.length
+                      }
+                      className={`w-full py-4 px-6 rounded-full text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                        !selectedVariant.color ||
+                        !selectedVariant.fit ||
+                        !selectedVariant.quality ||
+                        !selectedVariant.size ||
+                        !files.length
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-primary text-white hover:bg-primary/90"
+                      }`}
                     >
-                      <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-                      <span className="relative z-10 flex items-center gap-2">
-                        <span>Sonraki Adım</span>
-                      </span>
+                      Sonraki Adım
                     </button>
                   </div>
                 </>
@@ -418,22 +502,17 @@ export default function CustomOrderPage() {
                     <button
                       type="button"
                       onClick={() => setStep(0)}
-                      className={`relative overflow-hidden bg-primary text-white group w-full py-4 px-6 rounded-full  text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
+                      className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
                     >
-                      <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-                      <span className="relative z-10 flex items-center gap-2">
-                        <span>Önceki Adım</span>
-                      </span>
+                      Önceki Adım
                     </button>
                     <button
                       type="button"
+                      disabled={!form.name || !form.email || !form.phone}
                       onClick={() => setStep(2)}
-                      className={`relative overflow-hidden bg-primary text-white group w-full py-4 px-6 rounded-full  text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
+                      className="w-full py-4 px-6 rounded-full bg-primary text-white font-semibold hover:bg-primary/90 transition"
                     >
-                      <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-                      <span className="relative z-10 flex items-center gap-2">
-                        <span>Sonraki Adım</span>
-                      </span>
+                      Ödemeye Geç
                     </button>
                   </div>
                 </>
@@ -481,12 +560,9 @@ export default function CustomOrderPage() {
                     <button
                       type="button"
                       onClick={() => setStep(1)}
-                      className={`relative overflow-hidden bg-primary text-white group w-full py-4 px-6 rounded-full  text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
+                      className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
                     >
-                      <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-                      <span className="relative z-10 flex items-center gap-2">
-                        <span>Önceki Adım</span>
-                      </span>
+                      Önceki Adım
                     </button>
                   </div>
                 </>
@@ -569,7 +645,7 @@ export default function CustomOrderPage() {
           <div className="bg-white w-full max-w-2xl rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">Baskı Ayarları</h2>
             {/* Kontroller */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
                 <label
                   htmlFor="side"
@@ -616,72 +692,58 @@ export default function CustomOrderPage() {
                   <option value="large">Büyük</option>
                 </select>
               </div>
-
-              <div className="flex flex-col space-y-1">
-                <label
-                  htmlFor="position"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Baskı Konumu
-                </label>
-                <select
-                  id="position"
-                  className="input"
-                  value={designConfig.position}
-                  onChange={(e) =>
-                    setDesignConfig((prev) => ({
-                      ...prev,
-                      position: e.target.value,
-                    }))
-                  }
-                >
-                  <option value="topLeft">Sol Üst</option>
-                  <option value="center">Orta</option>
-                  <option value="topRight">Sağ Üst</option>
-                </select>
-              </div>
             </div>
 
             {/* Önizleme */}
-            <div className="relative w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+            <div
+              ref={designAreaRef}
+              className="relative w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center"
+            >
+              <div
+                className="absolute border-2 border-red-500"
+                style={{
+                  top: 50,
+                  left: 210,
+                  width: 200,
+                  height: 200,
+                  pointerEvents: "none",
+                }}
+              ></div>
               <img
-                src={`/tshirt-${designConfig.side}.png`}
+                src={`/t-${designConfig.side}.jpeg`}
                 alt="Tişört"
                 className="w-auto h-full object-contain"
               />
               {files[0] && (
                 <img
+                  ref={dragRef}
                   src={URL.createObjectURL(files[0])}
                   alt="Tasarım"
-                  className={`absolute ${getSizeStyle(
+                  draggable={false}
+                  className={`absolute object-contain ${getSizeStyle(
                     designConfig.size
                   )} transition-all`}
+                  onMouseDown={() => setIsDragging(true)}
                   style={{
-                    top:
-                      designConfig.position === "topLeft" ||
-                      designConfig.position === "topRight"
-                        ? window.innerWidth < 768
-                          ? "20%"
-                          : "25%"
-                        : "50%",
-                    left:
-                      designConfig.position === "topLeft"
-                        ? window.innerWidth < 768
-                          ? "25%"
-                          : "35%"
-                        : designConfig.position === "topRight"
-                        ? undefined
-                        : "50%",
-                    right:
-                      designConfig.position === "topRight"
-                        ? window.innerWidth < 768
-                          ? "25%"
-                          : "35%"
-                        : undefined,
-                    transform:
-                      designConfig.position === "center"
-                        ? "translate(-50%, -50%)"
-                        : "translate(0%, 0%)",
+                    top: `${dragPosition.y}px`,
+                    left: `${dragPosition.x}px`,
+                    width:
+                      imageAspectRatio >= 1
+                        ? `${maxSize}px`
+                        : `${maxSize * imageAspectRatio}px`,
+                    height:
+                      imageAspectRatio < 1
+                        ? `${maxSize}px`
+                        : `${maxSize / imageAspectRatio}px`,
+                    position: "absolute",
+                    userSelect: "none",
+                    objectFit: "contain",
+                  }}
+                  onLoad={(e) => {
+                    const { naturalWidth, naturalHeight } = e.target;
+                    if (naturalWidth && naturalHeight) {
+                      setImageAspectRatio(naturalWidth / naturalHeight);
+                    }
                   }}
                 />
               )}
@@ -704,7 +766,11 @@ export default function CustomOrderPage() {
                 Vazgeç
               </button>
               <button
-                onClick={() => setShowDesignModal(false)}
+                onClick={async () => {
+                  const dataUrl = await captureFinalDesign();
+                  setFinalDesignDataUrl(dataUrl);
+                  setShowDesignModal(false);
+                }}
                 className="bg-primary text-white px-6 py-2 rounded-full font-semibold"
               >
                 Onayla
