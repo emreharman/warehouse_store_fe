@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import html2canvas from "html2canvas";
+import { base64ToBlob } from "../../utils/base64ToBlog";
 
 export default function CustomOrderPage() {
   const fileInputRef = useRef(null);
@@ -98,21 +99,24 @@ export default function CustomOrderPage() {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging || !dragRef.current) return;
-
+  
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  
       const container = dragRef.current.parentElement.getBoundingClientRect();
       const designWidth = dragRef.current.offsetWidth;
       const designHeight = dragRef.current.offsetHeight;
-
+  
       const PRINT_AREA = {
         top: 50,
         left: 210,
         width: 200,
         height: 200,
       };
-
-      let newX = e.clientX - container.left - designWidth / 2;
-      let newY = e.clientY - container.top - designHeight / 2;
-
+  
+      let newX = clientX - container.left - designWidth / 2;
+      let newY = clientY - container.top - designHeight / 2;
+  
       newX = Math.max(
         PRINT_AREA.left,
         Math.min(newX, PRINT_AREA.left + PRINT_AREA.width - designWidth)
@@ -121,23 +125,26 @@ export default function CustomOrderPage() {
         PRINT_AREA.top,
         Math.min(newY, PRINT_AREA.top + PRINT_AREA.height - designHeight)
       );
-
+  
       setDragPosition({ x: newX, y: newY });
     };
-
-    const handleMouseUp = () => {
-      setIsDragging(false); // 🔥 Bırakıldığında durdur
-    };
-
-    // Listener'ları sadece dragging açıkken ekle
+  
+    const handleMouseUp = () => setIsDragging(false);
+  
     if (isDragging) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
+  
+      document.addEventListener("touchmove", handleMouseMove, { passive: false });
+      document.addEventListener("touchend", handleMouseUp);
     }
-
+  
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
+  
+      document.removeEventListener("touchmove", handleMouseMove);
+      document.removeEventListener("touchend", handleMouseUp);
     };
   }, [isDragging]);
 
@@ -255,18 +262,26 @@ export default function CustomOrderPage() {
     let designFiles = [];
 
     try {
-      for (const file of files) {
-        const { data, error } = await supabase.storage
-          .from("designs")
-          .upload(`custom/${Date.now()}-${file.name}`, file);
+      const designFileName = `custom-${Date.now()}-${files[0].name}`;
+      const { data: designUploadData, error: designUploadError } =
+        await supabase.storage
+          .from("warehouse")
+          .upload(designFileName, files[0]);
+      if (designUploadError) throw designUploadError;
+      const { data: designUploadUrl, error: designUploadUrlError } =
+        await supabase.storage.from("warehouse").getPublicUrl(designFileName);
+      designFiles.push(designUploadUrl.publicUrl);
 
-        if (error) throw error;
-
-        const url = supabase.storage.from("designs").getPublicUrl(data.path);
-        designFiles.push(url.data.publicUrl);
-      }
-
-      const finalImage = await captureFinalDesign();
+      const finalDesignFileName = `custom-${Date.now()}-finalDesign`;
+      const { data: finalDesignUploadData, error: finalDesignUploadError } =
+        await supabase.storage
+          .from("warehouse")
+          .upload(finalDesignFileName, base64ToBlob(finalDesignDataUrl));
+      if (finalDesignUploadError) throw finalDesignUploadError;
+      const { data: finalDesignUploadUrl, error: finalDesignUploadUrlError } =
+        await supabase.storage
+          .from("warehouse")
+          .getPublicUrl(finalDesignFileName);
 
       const payload = {
         customer: form,
@@ -280,15 +295,16 @@ export default function CustomOrderPage() {
               ...designConfig,
               pixelPosition: dragPosition,
               fileName: files[0]?.name,
-              finalDesign: finalImage,
+              finalDesign: finalDesignUploadUrl.publicUrl,
             },
           },
         ],
         note: form.note,
         totalPrice: 0,
+        paymentStatus: "pending",
       };
 
-      await api.post("/orders", payload);
+      //await api.post("/orders", payload);
       toast.success("Sipariş başarıyla oluşturuldu!");
     } catch (err) {
       toast.error("Hata oluştu");
@@ -385,7 +401,7 @@ export default function CustomOrderPage() {
 
                       <textarea
                         name="note"
-                        placeholder="Not (isteğe bağlı)"
+                        placeholder="Özel Sipariş Notu (isteğe bağlı)"
                         value={form.note}
                         onChange={handleChange}
                         className="input h-24"
@@ -519,51 +535,123 @@ export default function CustomOrderPage() {
               )}
               {step === 2 && (
                 <>
-                  {/* Sözleşme kutuları */}
-                  <div className="space-y-4">
-                    <h2 className="text-lg font-semibold text-gray-700">
-                      Sözleşmeler
-                    </h2>
-                    {agreementLinks.map((doc) => (
-                      <div key={doc.title} className="flex items-start gap-2">
+                  <div className="space-y-8">
+                    {/* Kredi Kartı Bilgileri */}
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-semibold text-gray-700">
+                        Kredi Kartı Bilgileri
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input
-                          type="checkbox"
-                          checked={agreementsAccepted[doc.title]}
-                          onChange={(e) =>
-                            setAgreementsAccepted((prev) => ({
-                              ...prev,
-                              [doc.title]: e.target.checked,
-                            }))
-                          }
-                          className="mt-1"
+                          type="text"
+                          name="cardNumber"
+                          placeholder="Kart Numarası"
+                          maxLength={19}
+                          onChange={(e) => {
+                            e.target.value = e.target.value
+                              .replace(/\D/g, "")
+                              .replace(/(.{4})/g, "$1 ")
+                              .trim();
+                          }}
+                          className="input"
+                          required
                         />
-                        <div className="text-sm text-gray-700">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedAgreementUrl(doc.url)}
-                            className="text-blue-600 hover:underline"
-                          >
-                            {doc.title}
-                          </button>{" "}
-                          belgesini okudum ve kabul ediyorum.
-                        </div>
+                        <input
+                          type="text"
+                          name="cardName"
+                          placeholder="Kart Üzerindeki İsim"
+                          className="input"
+                          required
+                        />
+                        <input
+                          type="text"
+                          name="expiry"
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          onChange={(e) => {
+                            e.target.value = e.target.value
+                              .replace(/\D/g, "")
+                              .replace(/^(\d{2})(\d{0,2})/, "$1/$2");
+                          }}
+                          className="input"
+                          required
+                        />
+                        <input
+                          type="text"
+                          name="cvc"
+                          placeholder="CVC"
+                          maxLength={3}
+                          onChange={(e) => {
+                            e.target.value = e.target.value.replace(/\D/g, "");
+                          }}
+                          className="input"
+                          required
+                        />
                       </div>
-                    ))}
-                    {!allAgreementsAccepted && (
-                      <p className="text-red-500 text-sm">
-                        Sipariş verebilmek için tüm sözleşmeleri onaylamanız
-                        gerekir.
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setStep(1)}
-                      className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
-                    >
-                      Önceki Adım
-                    </button>
+                    </div>
+
+                    {/* Sözleşmeler */}
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-semibold text-gray-700">
+                        Sözleşmeler
+                      </h2>
+                      {agreementLinks.map((doc) => (
+                        <div key={doc.title} className="flex items-start gap-2">
+                          <input
+                            type="checkbox"
+                            checked={agreementsAccepted[doc.title]}
+                            onChange={(e) =>
+                              setAgreementsAccepted((prev) => ({
+                                ...prev,
+                                [doc.title]: e.target.checked,
+                              }))
+                            }
+                            className="mt-1"
+                          />
+                          <div className="text-sm text-gray-700">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAgreementUrl(doc.url)}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {doc.title}
+                            </button>{" "}
+                            belgesini okudum ve kabul ediyorum.
+                          </div>
+                        </div>
+                      ))}
+                      {!allAgreementsAccepted && (
+                        <p className="text-red-500 text-sm">
+                          Sipariş verebilmek için tüm sözleşmeleri onaylamanız
+                          gerekir.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Butonlar */}
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+                      >
+                        Önceki Adım
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!allAgreementsAccepted || uploading}
+                        className={`relative overflow-hidden group w-full py-4 px-6 rounded-full ${
+                          allAgreementsAccepted
+                            ? "bg-primary text-white"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        } text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
+                      >
+                        <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
+                        <span className="relative z-10 flex items-center gap-2">
+                          🚀 <span>Ödemeyi Tamamla</span>
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -724,6 +812,7 @@ export default function CustomOrderPage() {
                     designConfig.size
                   )} transition-all`}
                   onMouseDown={() => setIsDragging(true)}
+                  onTouchStart={() => setIsDragging(true)}
                   style={{
                     top: `${dragPosition.y}px`,
                     left: `${dragPosition.x}px`,

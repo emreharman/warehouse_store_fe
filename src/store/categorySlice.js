@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '@/lib/api';
-import { ENDPOINTS } from '@/constants/endpoints';
+import api from '../lib/api';
+import { ENDPOINTS } from '../constants/endpoints';
 
 export const fetchCategories = createAsyncThunk('category/fetchCategories', async () => {
   const response = await api.get(ENDPOINTS.CATEGORIES);

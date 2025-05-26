@@ -1,8 +1,8 @@
 // store/variantOptionsSlice.js
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "@/lib/api";
-import { ENDPOINTS } from "@/constants/endpoints";
+import api from "../lib/api";
+import { ENDPOINTS } from "../constants/endpoints";
 
 export const fetchVariantOptions = createAsyncThunk(
   "variantOptions/fetchVariantOptions",
