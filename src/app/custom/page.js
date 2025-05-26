@@ -342,6 +342,9 @@ export default function CustomOrderPage() {
       setUploading(false);
     }
   };
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   return (
     <>
