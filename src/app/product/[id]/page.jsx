@@ -1,61 +1,64 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useSelector, useDispatch } from 'react-redux'
-import { fetchProducts } from '../../../store/productSlice'
-import { useCart } from '../../../hooks/useCart'
-import { toast } from 'react-hot-toast'
-import { Minus, Plus } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchProducts } from "../../../store/productSlice";
+import { useCart } from "../../../hooks/useCart";
+import { toast } from "react-hot-toast";
+import { Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ProductDetailPage() {
-  const { id } = useParams()
-  const dispatch = useDispatch()
+  const { id } = useParams();
+  const dispatch = useDispatch();
 
-  const { items: products, loading } = useSelector((state) => state.product)
-  const { items: variantOptions } = useSelector((state) => state.variantOptions)
+  const { items: products, loading } = useSelector((state) => state.product);
+  const { items: variantOptions } = useSelector(
+    (state) => state.variantOptions
+  );
 
-  const [product, setProduct] = useState(null)
+  const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState({
-    color: '',
-    size: '',
-    quality: '',
-    fit: '',
-  })
+    color: "",
+    size: "",
+    quality: "",
+    fit: "",
+  });
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { items: cartItems, add, update, remove } = useCart()
-  const cartItem = cartItems.find((item) => item.id === id)
-  const quantity = cartItem?.qty || 0
+  const { items: cartItems, add, update, remove } = useCart();
+  const cartItem = cartItems.find((item) => item.id === id);
+  const quantity = cartItem?.qty || 0;
 
   useEffect(() => {
     if (products.length === 0) {
-      dispatch(fetchProducts())
+      dispatch(fetchProducts());
     } else {
-      const found = products.find((p) => p._id === id)
-      setProduct(found || null)
+      const found = products.find((p) => p._id === id);
+      setProduct(found || null);
     }
-  }, [dispatch, products, id])
+  }, [dispatch, products, id]);
 
-  if (loading || !product) return <div className="p-6">Yükleniyor...</div>
+  if (loading || !product) return <div className="p-6">Yükleniyor...</div>;
 
-  const image = product.images?.[0] || '/placeholder.png'
-  const variant = product.variants?.[0]
-  const price = variant?.price || 0
-  const discount = variant?.discount || 0
-  const finalPrice = discount ? price - (price * discount) / 100 : price
+  const images = product.images?.length ? product.images : ["/placeholder.png"];
+  const variant = product.variants?.[0];
+  const price = variant?.price || 0;
+  const discount = variant?.discount || 0;
+  const finalPrice = discount ? price - (price * discount) / 100 : price;
 
-  const isVariantSelected = Object.values(selectedVariant).every(Boolean)
+  const isVariantSelected = Object.values(selectedVariant).every(Boolean);
 
   const handleVariantChange = (e) => {
-    const { name, value } = e.target
-    setSelectedVariant((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setSelectedVariant((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleAdd = () => {
-    if (!isVariantSelected) return
+    if (!isVariantSelected) return;
 
     if (quantity > 0) {
-      update(product._id, quantity + 1)
+      update(product._id, quantity + 1);
     } else {
       add({
         id: product._id,
@@ -64,30 +67,54 @@ export default function ProductDetailPage() {
         price: finalPrice,
         qty: 1,
         selectedVariant,
-      })
-      toast.success('Ürün sepete eklendi!')
+      });
+      toast.success("Ürün sepete eklendi!");
     }
-  }
+  };
 
   const handleDecrement = () => {
     if (quantity <= 1) {
-      remove(product._id)
-      toast.error('Ürün sepetten çıkarıldı')
+      remove(product._id);
+      toast.error("Ürün sepetten çıkarıldı");
     } else {
-      update(product._id, quantity - 1)
+      update(product._id, quantity - 1);
     }
-  }
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Ürün Görseli */}
-        <div className="relative w-full overflow-hidden rounded-xl border shadow-sm">
+        <div className="relative w-full overflow-hidden rounded-xl border shadow-sm aspect-square bg-gray-100 flex items-center justify-center">
           <img
-            src={image}
+            src={images[currentImageIndex]}
             alt={product.name}
-            className="w-full object-cover aspect-square"
+            className="h-full object-contain transition duration-300"
           />
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1.5 rounded-full shadow"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={handleNextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1.5 rounded-full shadow"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </>
+          )}
           {discount > 0 && (
             <span className="absolute top-4 left-4 bg-red-500 text-white text-xs px-3 py-1 rounded-full shadow-md">
               %{discount} İndirim
@@ -148,11 +175,17 @@ export default function ProductDetailPage() {
           <div className="mt-8">
             {quantity > 0 ? (
               <div className="flex items-center justify-center gap-4 bg-primary text-white rounded-xl py-4 shadow-md">
-                <button onClick={handleDecrement} className="p-2 hover:opacity-80 transition">
+                <button
+                  onClick={handleDecrement}
+                  className="p-2 hover:opacity-80 transition"
+                >
                   <Minus className="w-5 h-5" />
                 </button>
                 <span className="text-lg font-semibold">{quantity}</span>
-                <button onClick={handleAdd} className="p-2 hover:opacity-80 transition">
+                <button
+                  onClick={handleAdd}
+                  className="p-2 hover:opacity-80 transition"
+                >
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
@@ -162,8 +195,8 @@ export default function ProductDetailPage() {
                 disabled={!isVariantSelected}
                 className={`w-full py-4 rounded-xl text-lg font-semibold shadow-md transition duration-300 ease-in-out ${
                   isVariantSelected
-                    ? 'bg-primary text-white hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? "bg-primary text-white hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
                 Sepete Ekle
@@ -173,5 +206,5 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
