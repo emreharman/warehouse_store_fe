@@ -8,24 +8,28 @@ import cartReducer from "./cartSlice"
 import variantOptionsReducer from "./variantOptionsSlice"
 import authReducer from "./authSlice"
 
-const persistConfig = {
-  key: "root",
+// Sadece cart ve auth slice'larını persist et
+const cartPersistConfig = {
+  key: "cart",
+  storage,
+  version: 1,
+}
+const authPersistConfig = {
+  key: "auth",
   storage,
   version: 1,
 }
 
 const rootReducer = combineReducers({
-  category: categoryReducer,
-  product: productReducer,
-  cart: cartReducer,
-  variantOptions: variantOptionsReducer,
-  auth: authReducer,
+  category: categoryReducer, // will not persist
+  product: productReducer,   // will not persist
+  variantOptions: variantOptionsReducer, // will not persist
+  cart: persistReducer(cartPersistConfig, cartReducer),
+  auth: persistReducer(authPersistConfig, authReducer),
 })
 
-const persistedReducer = persistReducer(persistConfig, rootReducer)
-
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,

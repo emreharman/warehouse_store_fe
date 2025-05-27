@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { ShoppingCart, Minus, Plus } from 'lucide-react'
+import { ShoppingCart, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCart } from '../hooks/useCart'
 import { toast } from 'react-hot-toast'
 import { useDispatch, useSelector } from 'react-redux'
@@ -17,6 +17,7 @@ export default function ProductCard({ product }) {
     quality: '',
     fit: '',
   })
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const image = product.images?.[0] || '/placeholder.png'
   const variant = product.variants?.[0]
@@ -66,16 +67,42 @@ export default function ProductCard({ product }) {
     }
   }
 
+  const nextImage = (e) => {
+    e.preventDefault()
+    setCurrentImageIndex((prev) => (prev + 1) % product?.images?.length)
+  }
+
+  const prevImage = (e) => {
+    e.preventDefault()
+    setCurrentImageIndex((prev) => (prev - 1 + product?.images?.length) % product?.images?.length)
+  }
+
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md hover:shadow-lg transition-all duration-300">
-      {/* Ürün linki */}
-      <Link href={`/product/${product._id}`} className="block">
-        <div className="relative w-full pt-[100%] bg-gray-100 overflow-hidden">
+    <div className="flex flex-col h-[250px] md:h-[450px] w-full max-w-sm rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+      <Link href={`/product/${product._id}`} className="flex flex-col h-full">
+        {/* Slider alanı */}
+        <div className="relative h-[260px] w-full flex items-center justify-center bg-gray-100 overflow-hidden">
           <img
-            src={image}
+            src={product?.images?.[currentImageIndex]}
             alt={product.name}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+            className="h-full object-contain transition duration-300"
           />
+          {product?.images?.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1 rounded-full shadow"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1 rounded-full shadow"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
           {discount > 0 && (
             <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full shadow">
               %{discount} İndirim
@@ -83,32 +110,36 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 p-4">
-          <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
-            {product.name}
-          </h3>
-          <p className="text-sm text-gray-500 line-clamp-2 min-h-[2.75rem]">
-            {product.description || 'Açıklama bulunamadı.'}
-          </p>
-
-          <div className="mt-auto flex items-center gap-2 text-sm">
-            {discount > 0 && (
-              <span className="text-gray-400 line-through">
-                {price.toFixed(2)}₺
+        {/* Bilgiler */}
+        <div className="flex flex-col justify-between flex-1 p-4">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
+              {product.name}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2 min-h-[2.5rem]">
+              {product.description || 'Açıklama bulunamadı.'}
+            </p>
+          </div>
+          <div className="mt-auto flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              {discount > 0 && (
+                <span className="text-gray-400 line-through">
+                  {price.toFixed(2)}₺
+                </span>
+              )}
+              <span className="font-bold text-primary">
+                {finalPrice.toFixed(2)}₺
               </span>
-            )}
-            <span className="font-bold text-primary">
-              {finalPrice.toFixed(2)}₺
-            </span>
+            </div>
           </div>
         </div>
       </Link>
 
-      {/* Sepet Kontrol Butonları */}
+      {/* Sepet butonu */}
       <div className="absolute bottom-3 right-3">
         {quantity > 0 ? (
           <div className="flex items-center gap-2 bg-primary text-white rounded-full px-3 py-1 shadow-md">
-            <button onClick={handleDecrement} className="p-1 hover:opacity-80 transition">
+            <button onClick={(e) => { e.preventDefault(); handleDecrement(e) }} className="p-1 hover:opacity-80 transition">
               <Minus className="w-4 h-4" />
             </button>
             <span className="text-sm font-medium">{quantity}</span>
@@ -126,12 +157,11 @@ export default function ProductCard({ product }) {
         )}
       </div>
 
-      {/* Variant Seçim Modali */}
+      {/* Varyant Seçim Modali */}
       {showVariantModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
           <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-4">
             <h2 className="text-lg font-semibold text-center">Varyant Seçin</h2>
-
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(variantOptions).map(([key, options]) => (
                 <select
@@ -155,7 +185,6 @@ export default function ProductCard({ product }) {
                 </select>
               ))}
             </div>
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowVariantModal(false)}

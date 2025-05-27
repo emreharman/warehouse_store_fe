@@ -24,11 +24,9 @@ export default function HomePage() {
 
       <div>
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tüm Ürünler</h2>
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((product) => (
-            <div key={product._id} className="min-w-[200px] flex-shrink-0">
-              <ProductCard product={product} />
-            </div>
+            <ProductCard key={product._id} product={product} />
           ))}
         </div>
       </div>
