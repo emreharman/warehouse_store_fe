@@ -3,9 +3,14 @@
 @tailwind utilities;
 @import 'keen-slider/keen-slider.min.css';
 
+html,
+body {
+  height: 100%;
+}
+
+
 body {
   @apply bg-white text-gray-900 font-sans;
-  height: 100%;
 }
 
 a {

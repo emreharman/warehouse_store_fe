@@ -6,6 +6,7 @@ import { fetchProducts } from "../store/productSlice";
 import { fetchVariantOptions } from "../store/variantOptionsSlice";
 import ProductCard from "../components/ProductCard";
 import BannerSlider from "../components/BannerSlider";
+import Spinner from "../components/Spinner";
 
 export default function HomePage() {
   const dispatch = useDispatch();
@@ -15,8 +16,6 @@ export default function HomePage() {
     if (products.length === 0) dispatch(fetchProducts());
     dispatch(fetchVariantOptions());
   }, [dispatch, products]);
-
-  if (loading) return <div className="p-4">Yükleniyor...</div>;
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -30,6 +29,7 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+      {loading && <Spinner />}
     </div>
   );
 }
