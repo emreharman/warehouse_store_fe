@@ -170,6 +170,17 @@ export default function CustomOrderPage() {
   }, [isDragging]);
 
   useEffect(() => {
+    if (showDesignModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showDesignModal]);
+
+  useEffect(() => {
     if (showDesignModal && dragRef.current) {
       setTimeout(() => {
         const designWidth = dragRef.current.offsetWidth;
@@ -893,8 +904,8 @@ export default function CustomOrderPage() {
         </button>
       </div> */}
       {showDesignModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-          <div className="bg-white w-full max-w-2xl rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+          <div className="bg-white w-full max-w-2xl mx-auto my-10 rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">Baskı Ayarları</h2>
             {/* Kontroller */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
