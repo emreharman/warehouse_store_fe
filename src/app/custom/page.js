@@ -173,16 +173,16 @@ export default function CustomOrderPage() {
   useEffect(() => {
     const modalEl = modalRef.current;
     if (!modalEl) return;
-  
+
     const preventScroll = (e) => {
       e.preventDefault();
     };
-  
+
     if (isDragging) {
       modalEl.addEventListener("wheel", preventScroll, { passive: false });
       modalEl.addEventListener("touchmove", preventScroll, { passive: false });
     }
-  
+
     return () => {
       modalEl.removeEventListener("wheel", preventScroll);
       modalEl.removeEventListener("touchmove", preventScroll);
@@ -346,27 +346,30 @@ export default function CustomOrderPage() {
 
       const payload = {
         customer: form,
-        type: "custom",
-        items: [
-          {
-            selectedVariant: {},
-            quantity: 1,
-            designFiles,
-            designMeta: {
-              ...designConfig,
-              pixelPosition: dragPosition,
-              fileName: files[0]?.name,
-              finalDesign: finalDesignUploadUrl.publicUrl,
+        order: {
+          type: "custom",
+          note: form.note,
+          items: [
+            {
+              productType, // örn: "t", "h", "c"
+              selectedVariant,
+              quantity,
+              designFiles,
+              designMeta: {
+                ...designConfig,
+                pixelPosition: dragPosition,
+                fileName: files[0]?.name,
+                finalDesign: finalDesignUploadUrl.publicUrl,
+              },
             },
-          },
-        ],
-        note: form.note,
-        totalPrice: 450 * quantity, //endpointten gelmeli
-        paymentStatus: "pre-payment",
+          ],
+          totalPrice: 450 * quantity, // opsiyonel, backend hesaplayacaksa kaldırılabilir
+          status: "pre_payment", // opsiyonel
+        },
       };
       console.log("payload", payload);
 
-      //await api.post("/orders", payload);
+      await api.post("/orders", payload);
       toast.success("Sipariş başarıyla oluşturuldu!");
     } catch (err) {
       toast.error("Hata oluştu");
@@ -924,7 +927,9 @@ export default function CustomOrderPage() {
         </button>
       </div> */}
       {showDesignModal && (
-        <div ref={modalRef} className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+        <div
+          ref={modalRef}
+          className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
           <div className="bg-white w-full max-w-2xl mx-auto my-10 rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">Baskı Ayarları</h2>
             {/* Kontroller */}
