@@ -26,6 +26,7 @@ export default function CustomOrderPage() {
   const fileInputRef = useRef(null);
   const dragRef = useRef(null);
   const designAreaRef = useRef(null);
+  const modalRef = useRef(null);
 
   const { customer } = useSelector((state) => state.auth);
 
@@ -166,6 +167,25 @@ export default function CustomOrderPage() {
 
       document.removeEventListener("touchmove", handleMouseMove);
       document.removeEventListener("touchend", handleMouseUp);
+    };
+  }, [isDragging]);
+
+  useEffect(() => {
+    const modalEl = modalRef.current;
+    if (!modalEl) return;
+  
+    const preventScroll = (e) => {
+      e.preventDefault();
+    };
+  
+    if (isDragging) {
+      modalEl.addEventListener("wheel", preventScroll, { passive: false });
+      modalEl.addEventListener("touchmove", preventScroll, { passive: false });
+    }
+  
+    return () => {
+      modalEl.removeEventListener("wheel", preventScroll);
+      modalEl.removeEventListener("touchmove", preventScroll);
     };
   }, [isDragging]);
 
@@ -904,7 +924,7 @@ export default function CustomOrderPage() {
         </button>
       </div> */}
       {showDesignModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+        <div ref={modalRef} className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
           <div className="bg-white w-full max-w-2xl mx-auto my-10 rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">Baskı Ayarları</h2>
             {/* Kontroller */}
