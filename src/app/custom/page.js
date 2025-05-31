@@ -21,12 +21,14 @@ import {
 import { supabase } from "../../lib/supabase";
 import html2canvas from "html2canvas";
 import { base64ToBlob } from "../../utils/base64ToBlog";
+import { useRouter } from "next/navigation";
 
 export default function CustomOrderPage() {
   const fileInputRef = useRef(null);
   const dragRef = useRef(null);
   const designAreaRef = useRef(null);
   const modalRef = useRef(null);
+  const router = useRouter();
 
   const { customer } = useSelector((state) => state.auth);
 
@@ -98,6 +100,12 @@ export default function CustomOrderPage() {
     size: "medium", // small | medium | large
     position: "center", // topLeft | center | topRight
   });
+  
+  useEffect(() => {
+    if (typeof window !== "undefined" && customer === null) {
+      router.push("/user");
+    }
+  }, [customer]);
 
   const getPrintArea = () => {
     const container = designAreaRef.current?.getBoundingClientRect();
