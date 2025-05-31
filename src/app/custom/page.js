@@ -37,7 +37,7 @@ export default function CustomOrderPage() {
   const [uploading, setUploading] = useState(false);
   const [showDesignModal, setShowDesignModal] = useState(false);
   const [finalDesignDataUrl, setFinalDesignDataUrl] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
   const [form, setForm] = useState({
     name: customer?.name,
     phone: customer?.phone,
@@ -98,6 +98,17 @@ export default function CustomOrderPage() {
     position: "center", // topLeft | center | topRight
   });
 
+  const getPrintArea = () => {
+    const container = designAreaRef.current?.getBoundingClientRect();
+    if (!container) return { top: 0, left: 0, width: 100, height: 100 };
+    return {
+      top: !isMobile ? container.width * 0.35 : container.width * 0.39,
+      left: !isMobile ? container.width * 0.25 : container.width * 0.29,
+      width: !isMobile ? container.width * 0.49 : container.width * 0.4,
+      height: !isMobile ? container.width * 0.6 : container.width * 0.52,
+    };
+  };
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -120,12 +131,7 @@ export default function CustomOrderPage() {
       const designWidth = dragRef.current.offsetWidth;
       const designHeight = dragRef.current.offsetHeight;
 
-      const PRINT_AREA = {
-        top: isMobile ? 80 : 50,
-        left: isMobile ? 80 : 210,
-        width: isMobile ? 150 : 200,
-        height: isMobile ? 150 : 200,
-      };
+      const PRINT_AREA = getPrintArea();
 
       let newX = clientX - container.left - designWidth / 2;
       let newY = clientY - container.top - designHeight / 2;
@@ -166,15 +172,10 @@ export default function CustomOrderPage() {
   useEffect(() => {
     if (showDesignModal && dragRef.current) {
       setTimeout(() => {
-      const designWidth = dragRef.current.offsetWidth;
-      const designHeight = dragRef.current.offsetHeight;
+        const designWidth = dragRef.current.offsetWidth;
+        const designHeight = dragRef.current.offsetHeight;
 
-        const PRINT_AREA = {
-          top: isMobile ? 80 : 50,
-          left: isMobile ? 80 : 210,
-          width: isMobile ? 150 : 200,
-          height: isMobile ? 150 : 200,
-        };
+        const PRINT_AREA = getPrintArea();
 
         const centerX =
           PRINT_AREA.left +
@@ -183,7 +184,7 @@ export default function CustomOrderPage() {
           PRINT_AREA.top +
           (PRINT_AREA.height - dragRef.current.offsetHeight) / 2;
 
-      setDragPosition({ x: centerX, y: centerY });
+        setDragPosition({ x: centerX, y: centerY });
       }, 0);
     }
   }, [showDesignModal, designConfig.size, files]);
@@ -198,7 +199,7 @@ export default function CustomOrderPage() {
     {
       small: 64,
       medium: 112,
-      large: 160,
+      large: 150,
     }[designConfig.size] || 112;
 
   function getSizeStyle(size) {
@@ -942,59 +943,56 @@ export default function CustomOrderPage() {
             </div>
 
             {/* Önizleme */}
-            <div
-              ref={designAreaRef}
-              className="relative w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center"
-            >
+            <div className="w-full flex justify-center">
+              <div
+                ref={designAreaRef}
+                className="relative bg-gray-100 rounded-lg flex items-center justify-center w-[300px] md:w-[360px] h-[400px] md:h-[480px]">
                 <div
                   className="absolute border-2 border-red-500"
                   style={{
-                  top: isMobile ? 80 : 50,
-                  left: isMobile ? 80 : 210,
-                  width: isMobile ? 150 : 200,
-                  height: isMobile ? 150 : 200,
+                    ...getPrintArea(),
                     pointerEvents: "none",
-                }}
-              ></div>
-              <img
-                src={`/${productType}-${designConfig.side}-1.png`}
-                alt={`${productType} ${designConfig.side}`}
-                className="w-auto h-full object-contain"
-              />
-              {files[0] && (
+                  }}></div>
                 <img
-                  ref={dragRef}
-                  src={URL.createObjectURL(files[0])}
-                  alt="Tasarım"
-                  draggable={false}
-                  className={`absolute object-contain ${getSizeStyle(
-                    designConfig.size
-                  )} transition-all`}
-                  onMouseDown={() => setIsDragging(true)}
-                  onTouchStart={() => setIsDragging(true)}
-                  style={{
-                    top: `${dragPosition.y}px`,
-                    left: `${dragPosition.x}px`,
-                    width:
-                      imageAspectRatio >= 1
-                        ? `${maxSize}px`
-                        : `${maxSize * imageAspectRatio}px`,
-                    height:
-                      imageAspectRatio < 1
-                        ? `${maxSize}px`
-                        : `${maxSize / imageAspectRatio}px`,
-                    position: "absolute",
-                    userSelect: "none",
-                    objectFit: "contain",
-                  }}
-                  onLoad={(e) => {
-                    const { naturalWidth, naturalHeight } = e.target;
-                    if (naturalWidth && naturalHeight) {
-                      setImageAspectRatio(naturalWidth / naturalHeight);
-                    }
-                  }}
+                  src={`/${productType}-${designConfig.side}-1.png`}
+                  alt={`${productType} ${designConfig.side}`}
+                  className="w-[250px] md:w-[360px] h-auto object-contain"
                 />
-              )}
+                {files[0] && (
+                  <img
+                    ref={dragRef}
+                    src={URL.createObjectURL(files[0])}
+                    alt="Tasarım"
+                    draggable={false}
+                    className={`absolute object-contain ${getSizeStyle(
+                      designConfig.size
+                    )} transition-all`}
+                    onMouseDown={() => setIsDragging(true)}
+                    onTouchStart={() => setIsDragging(true)}
+                    style={{
+                      top: `${dragPosition.y}px`,
+                      left: `${dragPosition.x}px`,
+                      width:
+                        imageAspectRatio >= 1
+                          ? `${maxSize}px`
+                          : `${maxSize * imageAspectRatio}px`,
+                      height:
+                        imageAspectRatio < 1
+                          ? `${maxSize}px`
+                          : `${maxSize / imageAspectRatio}px`,
+                      position: "absolute",
+                      userSelect: "none",
+                      objectFit: "contain",
+                    }}
+                    onLoad={(e) => {
+                      const { naturalWidth, naturalHeight } = e.target;
+                      if (naturalWidth && naturalHeight) {
+                        setImageAspectRatio(naturalWidth / naturalHeight);
+                      }
+                    }}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Dipnot */}
