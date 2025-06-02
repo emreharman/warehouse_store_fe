@@ -14,4 +14,10 @@ export const ENDPOINTS = {
   ADD_ADDRESS: "/customers-auth/addresses",
   UPDATE_ADDRESS: (id) => `/customers-auth/addresses/${id}`,
   DELETE_ADDRESS: (id) => `/customers-auth/addresses/${id}`,
-}
+
+  // 🛒 Sepet
+  GET_CART: "/customer/cart",
+  ADD_TO_CART: "/customer/cart",
+  REMOVE_FROM_CART: (itemId) => `/customer/cart/${itemId}`,
+  CLEAR_CART: "/customer/cart",
+};

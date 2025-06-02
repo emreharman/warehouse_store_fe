@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -13,9 +13,7 @@ export default function ProductDetailPage() {
   const dispatch = useDispatch();
 
   const { items: products, loading } = useSelector((state) => state.product);
-  const { items: variantOptions } = useSelector(
-    (state) => state.variantOptions
-  );
+  const { items: variantOptions } = useSelector((state) => state.variantOptions);
 
   const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState({
@@ -26,9 +24,12 @@ export default function ProductDetailPage() {
   });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const { items: cartItems, add, update, remove } = useCart();
-  const cartItem = cartItems.find((item) => item.id === id);
-  const quantity = cartItem?.qty || 0;
+  const { items: cartItems, add, remove } = useCart();
+
+  // Ürün sepette varsa, sepetteki halini bul
+  const cartIndex = cartItems.findIndex((item) => item.id === id || item._id === id);
+  const cartItem = cartItems[cartIndex];
+  const quantity = cartItem?.quantity || 0;
 
   useEffect(() => {
     if (products.length === 0) {
@@ -54,30 +55,39 @@ export default function ProductDetailPage() {
     setSelectedVariant((prev) => ({ ...prev, [name]: value }));
   };
 
+  const image = images[0];
+
   const handleAdd = () => {
     if (!isVariantSelected) return;
 
-    if (quantity > 0) {
-      update(product._id, quantity + 1);
-    } else {
-      add({
-        id: product._id,
-        name: product.name,
-        image,
-        price: finalPrice,
-        qty: 1,
-        selectedVariant,
+    const newItem = {
+      id: product._id,
+      name: product.name,
+      image,
+      selectedVariant,
+      quantity: 1,
+      price: finalPrice,
+    };
+
+    if (quantity > 0 && cartIndex !== -1) {
+      // güncellemek için önce sil sonra ekle
+      remove(cartIndex).then(() => {
+        add({ ...newItem, quantity: quantity + 1 });
       });
+    } else {
+      add(newItem);
       toast.success("Ürün sepete eklendi!");
     }
   };
 
   const handleDecrement = () => {
-    if (quantity <= 1) {
-      remove(product._id);
+    if (quantity <= 1 && cartIndex !== -1) {
+      remove(cartIndex);
       toast.error("Ürün sepetten çıkarıldı");
-    } else {
-      update(product._id, quantity - 1);
+    } else if (cartIndex !== -1) {
+      remove(cartIndex).then(() => {
+        add({ ...cartItem, quantity: quantity - 1 });
+      });
     }
   };
 
@@ -101,16 +111,10 @@ export default function ProductDetailPage() {
           />
           {images.length > 1 && (
             <>
-              <button
-                onClick={handlePrevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1.5 rounded-full shadow"
-              >
+              <button onClick={handlePrevImage} className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1.5 rounded-full shadow">
                 <ChevronLeft size={20} />
               </button>
-              <button
-                onClick={handleNextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1.5 rounded-full shadow"
-              >
+              <button onClick={handleNextImage} className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1.5 rounded-full shadow">
                 <ChevronRight size={20} />
               </button>
             </>
@@ -122,37 +126,24 @@ export default function ProductDetailPage() {
           )}
         </div>
 
-        {/* Ürün Bilgileri + Variant + Sepet */}
+        {/* Ürün Bilgileri */}
         <div className="flex flex-col justify-between h-full">
           <div className="space-y-5">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              {product.name}
-            </h1>
-            <p className="text-gray-600 text-sm md:text-base">
-              {product.description}
-            </p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.name}</h1>
+            <p className="text-gray-600 text-sm md:text-base">{product.description}</p>
 
             <div className="flex items-center gap-3 mt-2">
               {discount > 0 && (
-                <span className="text-gray-400 line-through text-lg">
-                  {price.toFixed(2)}₺
-                </span>
+                <span className="text-gray-400 line-through text-lg">{price.toFixed(2)}₺</span>
               )}
-              <span className="text-primary text-2xl font-semibold">
-                {finalPrice.toFixed(2)}₺
-              </span>
+              <span className="text-primary text-2xl font-semibold">{finalPrice.toFixed(2)}₺</span>
             </div>
 
             {/* Varyant Seçimleri */}
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(variantOptions).map(([type, options]) => (
                 <div key={type} className="flex flex-col space-y-1">
-                  <label
-                    htmlFor={type}
-                    className="text-sm font-medium capitalize text-gray-700"
-                  >
-                    {type}
-                  </label>
+                  <label htmlFor={type} className="text-sm font-medium capitalize text-gray-700">{type}</label>
                   <select
                     name={type}
                     value={selectedVariant[type]}
@@ -175,17 +166,11 @@ export default function ProductDetailPage() {
           <div className="mt-8">
             {quantity > 0 ? (
               <div className="flex items-center justify-center gap-4 bg-primary text-white rounded-xl py-4 shadow-md">
-                <button
-                  onClick={handleDecrement}
-                  className="p-2 hover:opacity-80 transition"
-                >
+                <button onClick={handleDecrement} className="p-2 hover:opacity-80 transition">
                   <Minus className="w-5 h-5" />
                 </button>
                 <span className="text-lg font-semibold">{quantity}</span>
-                <button
-                  onClick={handleAdd}
-                  className="p-2 hover:opacity-80 transition"
-                >
+                <button onClick={handleAdd} className="p-2 hover:opacity-80 transition">
                   <Plus className="w-5 h-5" />
                 </button>
               </div>

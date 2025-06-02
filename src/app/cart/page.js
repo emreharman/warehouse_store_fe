@@ -6,14 +6,18 @@ import Link from 'next/link'
 import { toast } from 'react-hot-toast'
 
 export default function CartPage() {
-  const { items, update, remove, clear, totalQty, totalPrice } = useCart()
+  const { items, add, remove, clear, totalQty, totalPrice } = useCart()
 
-  const handleQtyChange = (id, qty) => {
-    if (qty < 1) {
-      remove(id)
+  const handleQtyChange = (index, item, newQty) => {
+    if (newQty < 1) {
+      remove(index)
       toast.error('Ürün sepetten çıkarıldı')
     } else {
-      update(id, qty)
+      // önce sil, sonra yeniden ekle
+      remove(index).then(() => {
+        const updatedItem = { ...item, quantity: newQty }
+        add(updatedItem)
+      })
     }
   }
 
@@ -36,9 +40,9 @@ export default function CartPage() {
       <h1 className="text-2xl font-bold mb-6">Sepetiniz</h1>
 
       <div className="flex flex-col gap-6">
-        {items.map((item) => (
+        {items.map((item, index) => (
           <div
-            key={item.id}
+            key={index}
             className="flex flex-col md:flex-row gap-4 border p-4 rounded-2xl shadow-sm"
           >
             <img
@@ -52,10 +56,9 @@ export default function CartPage() {
                   {item.name}
                 </h2>
                 <p className="text-sm text-gray-500 mb-2">
-                  Birim Fiyat: {item.price.toFixed(2)}₺
+                  Birim Fiyat: {item.selectedVariant?.price?.toFixed(2)}₺
                 </p>
 
-                {/* Varyantlar */}
                 {item.selectedVariant && (
                   <div className="grid grid-cols-2 gap-1 text-sm text-gray-600">
                     {Object.entries(item.selectedVariant).map(
@@ -72,14 +75,14 @@ export default function CartPage() {
               {/* Adet Kontrol */}
               <div className="flex items-center gap-2 mt-4">
                 <button
-                  onClick={() => handleQtyChange(item.id, item.qty - 1)}
+                  onClick={() => handleQtyChange(index, item, item.quantity - 1)}
                   className="bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="text-sm font-medium">{item.qty}</span>
+                <span className="text-sm font-medium">{item.quantity}</span>
                 <button
-                  onClick={() => handleQtyChange(item.id, item.qty + 1)}
+                  onClick={() => handleQtyChange(index, item, item.quantity + 1)}
                   className="bg-primary text-white w-7 h-7 rounded-full flex items-center justify-center"
                 >
                   <Plus className="w-4 h-4" />
@@ -87,14 +90,13 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Fiyat ve Sil */}
             <div className="flex flex-col items-end justify-between">
               <span className="text-primary font-bold text-lg">
-                {(item.price * item.qty).toFixed(2)}₺
+                {(item.selectedVariant?.price * item.quantity).toFixed(2)}₺
               </span>
               <button
                 onClick={() => {
-                  remove(item.id)
+                  remove(index)
                   toast('Ürün sepetten çıkarıldı')
                 }}
                 className="text-red-500 hover:text-red-700 transition"
@@ -106,7 +108,6 @@ export default function CartPage() {
         ))}
       </div>
 
-      {/* Alt Özet */}
       <div className="mt-10 border-t pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="text-lg font-semibold">
           Toplam ({totalQty} ürün):{' '}

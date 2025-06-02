@@ -25,9 +25,10 @@ export default function ProductCard({ product }) {
   const discount = variant?.discount || 0
   const finalPrice = discount ? price - (price * discount) / 100 : price
 
-  const { add, remove, update, items } = useCart()
-  const cartItem = items.find((item) => item.id === product._id)
-  const quantity = cartItem?.qty || 0
+  const { add, remove, items } = useCart()
+  const cartIndex = items.findIndex((item) => item.id === product._id)
+  const cartItem = items[cartIndex]
+  const quantity = cartItem?.quantity || 0
 
   const handleAddToCart = () => {
     if (!selectedOptions.color || !selectedOptions.size) {
@@ -40,7 +41,7 @@ export default function ProductCard({ product }) {
       name: product.name,
       image,
       price: finalPrice,
-      qty: 1,
+      quantity: 1,
       selectedVariant: selectedOptions,
     })
 
@@ -50,8 +51,11 @@ export default function ProductCard({ product }) {
 
   const handleAddClick = (e) => {
     e.preventDefault()
-    if (quantity > 0) {
-      update(product._id, quantity + 1)
+    if (quantity > 0 && cartIndex !== -1) {
+      // önce sil, sonra güncel adet ile ekle
+      remove(cartIndex).then(() => {
+        add({ ...cartItem, quantity: quantity + 1 })
+      })
     } else {
       setShowVariantModal(true)
     }
@@ -59,11 +63,13 @@ export default function ProductCard({ product }) {
 
   const handleDecrement = (e) => {
     e.preventDefault()
-    if (quantity <= 1) {
-      remove(product._id)
+    if (quantity <= 1 && cartIndex !== -1) {
+      remove(cartIndex)
       toast.error('Ürün sepetten çıkarıldı')
-    } else {
-      update(product._id, quantity - 1)
+    } else if (cartIndex !== -1) {
+      remove(cartIndex).then(() => {
+        add({ ...cartItem, quantity: quantity - 1 })
+      })
     }
   }
 
@@ -89,16 +95,10 @@ export default function ProductCard({ product }) {
           />
           {product?.images?.length > 1 && (
             <>
-              <button
-                onClick={prevImage}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1 rounded-full shadow"
-              >
+              <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1 rounded-full shadow">
                 <ChevronLeft size={18} />
               </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1 rounded-full shadow"
-              >
+              <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-600 p-1 rounded-full shadow">
                 <ChevronRight size={18} />
               </button>
             </>
@@ -139,7 +139,7 @@ export default function ProductCard({ product }) {
       <div className="absolute bottom-3 right-3">
         {quantity > 0 ? (
           <div className="flex items-center gap-2 bg-primary text-white rounded-full px-3 py-1 shadow-md">
-            <button onClick={(e) => { e.preventDefault(); handleDecrement(e) }} className="p-1 hover:opacity-80 transition">
+            <button onClick={handleDecrement} className="p-1 hover:opacity-80 transition">
               <Minus className="w-4 h-4" />
             </button>
             <span className="text-sm font-medium">{quantity}</span>
