@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import { Toaster } from "react-hot-toast";
 import StickyCustomTeeButton from "../components/StickyOrderButton";
 import ScrollToTop from "./scroll-top";
+import Script from "next/script";
 
 export const metadata = {
   title: "T-shirt Store",
@@ -12,6 +13,27 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr" className="h-full">
+      <head>
+        {/* ✅ Google Analytics Script */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-8T0TFYNXRR"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-8T0TFYNXRR', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
+      </head>
       <body className="h-full">
         <Providers>
           <ScrollToTop />
