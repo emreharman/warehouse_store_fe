@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import StickyCustomTeeButton from "../components/StickyOrderButton";
 import ScrollToTop from "./scroll-top";
 import Script from "next/script";
+import CookieConsentComponent from "../components/CookieConsentComponent"
 
 export const metadata = {
   title: "T-shirt Store",
@@ -41,6 +42,8 @@ export default function RootLayout({ children }) {
           <main className="min-h-screen">{children}</main>
           <Toaster position="top-right" />
           <StickyCustomTeeButton />
+          {/* ✅ CookieConsentComponent'i burada kullanıyoruz */}
+          <CookieConsentComponent />
         </Providers>
       </body>
     </html>
