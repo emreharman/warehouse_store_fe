@@ -23,8 +23,10 @@ import html2canvas from "html2canvas";
 import { base64ToBlob } from "../../utils/base64ToBlog";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../hooks/useCart";
+import { getCustomerProfile } from "../../store/authSlice";
 
 export default function CustomOrderPage() {
+  const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   const dragRef = useRef(null);
   const designAreaRef = useRef(null);
@@ -107,6 +109,12 @@ export default function CustomOrderPage() {
       router.push("/user");
     }
   }, [customer]);
+
+  useEffect(() => {
+    if (!!customer && !customer?.addresses?.length) {
+      dispatch(getCustomerProfile());
+    }
+  }, [customer?.addresses]);
 
   const getPrintArea = () => {
     const container = designAreaRef.current?.getBoundingClientRect();
@@ -448,8 +456,7 @@ export default function CustomOrderPage() {
             backgroundImage:
               "repeating-linear-gradient(135deg, #e5e7eb 0, #e5e7eb 1px, transparent 1px, transparent 40px)",
             backgroundSize: "40px 40px",
-          }}
-        ></div>
+          }}></div>
 
         {/* Sayfa içeriği */}
         <div className="max-w-4xl mx-auto px-4 pb-40 pt-12 md:pb-12">
@@ -462,8 +469,7 @@ export default function CustomOrderPage() {
             <form
               onSubmit={handleSubmit}
               id="custom-order-form"
-              className="space-y-10"
-            >
+              className="space-y-10">
               {step === 0 && (
                 <>
                   {/* Varyantlar */}
@@ -479,8 +485,7 @@ export default function CustomOrderPage() {
                       <select
                         value={productType}
                         onChange={(e) => setProductType(e.target.value)}
-                        className="input"
-                      >
+                        className="input">
                         <option value="t">Tişört</option>
                         <option value="h">Hoodie</option>
                         <option value="c">Çocuk</option>
@@ -494,8 +499,7 @@ export default function CustomOrderPage() {
                           value={selectedVariant[type] || ""}
                           onChange={handleVariantChange}
                           className="input capitalize"
-                          required
-                        >
+                          required>
                           <option value="">{type}</option>
                           {options.map((opt, i) => (
                             <option key={i} value={opt}>
@@ -522,8 +526,7 @@ export default function CustomOrderPage() {
                             onClick={() =>
                               setQuantity((q) => Math.max(1, q - 1))
                             }
-                            className="p-2 bg-gray-100 rounded hover:bg-gray-200"
-                          >
+                            className="p-2 bg-gray-100 rounded hover:bg-gray-200">
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="w-8 text-center font-semibold">
@@ -532,8 +535,7 @@ export default function CustomOrderPage() {
                           <button
                             type="button"
                             onClick={() => setQuantity((q) => q + 1)}
-                            className="p-2 bg-gray-100 rounded hover:bg-gray-200"
-                          >
+                            className="p-2 bg-gray-100 rounded hover:bg-gray-200">
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
@@ -570,8 +572,7 @@ export default function CustomOrderPage() {
                         {files.map((file, i) => (
                           <div
                             key={i}
-                            className="bg-gray-100 border rounded-lg px-3 py-1 text-sm"
-                          >
+                            className="bg-gray-100 border rounded-lg px-3 py-1 text-sm">
                             {file.name}
                           </div>
                         ))}
@@ -609,8 +610,7 @@ export default function CustomOrderPage() {
                         !files.length
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                           : "bg-primary text-white hover:bg-primary/90"
-                      }`}
-                    >
+                      }`}>
                       Sonraki Adım
                     </button>
                   </div>
@@ -673,8 +673,7 @@ export default function CustomOrderPage() {
                                   },
                                 }))
                               }
-                              className="flex-shrink-0 px-4 py-2 border rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition whitespace-nowrap"
-                            >
+                              className="flex-shrink-0 px-4 py-2 border rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition whitespace-nowrap">
                               {addr.label} - {addr.line1}
                             </button>
                           ))}
@@ -687,8 +686,7 @@ export default function CustomOrderPage() {
                         value={form.address.label}
                         onChange={handleChange}
                         required
-                        className="input"
-                      >
+                        className="input">
                         <option value="Ev">Ev</option>
                         <option value="İş">İş</option>
                         <option value="Diğer">Diğer</option>
@@ -732,8 +730,7 @@ export default function CustomOrderPage() {
                     <button
                       type="button"
                       onClick={() => setStep(0)}
-                      className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
-                    >
+                      className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">
                       Önceki Adım
                     </button>
                     <button
@@ -752,8 +749,7 @@ export default function CustomOrderPage() {
                         !form.name || !form.email || !form.phone
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                           : "bg-primary text-white hover:bg-primary/90"
-                      }`}
-                    >
+                      }`}>
                       Sonraki Adım
                     </button>
                   </div>
@@ -906,16 +902,14 @@ export default function CustomOrderPage() {
                       <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
-                      >
+                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">
                         Önceki Adım
                       </button>
                       <button
                         type="button"
                         onClick={handleAddToCart}
                         // disabled={!allAgreementsAccepted || uploading}
-                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
-                      >
+                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">
                         <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
                         <span className="relative z-10 flex items-center gap-2">
                           Sepete Ekle
@@ -934,8 +928,7 @@ export default function CustomOrderPage() {
                       <h2 className="text-lg font-bold">Sözleşme Önizleme</h2>
                       <button
                         className="text-gray-500 hover:text-gray-700"
-                        onClick={() => setSelectedAgreementUrl(null)}
-                      >
+                        onClick={() => setSelectedAgreementUrl(null)}>
                         ✕
                       </button>
                     </div>
@@ -949,8 +942,7 @@ export default function CustomOrderPage() {
                     <div className="p-4 border-t text-right">
                       <button
                         onClick={() => setSelectedAgreementUrl(null)}
-                        className="bg-primary text-white font-semibold px-5 py-2 rounded-full hover:bg-primary-dark transition"
-                      >
+                        className="bg-primary text-white font-semibold px-5 py-2 rounded-full hover:bg-primary-dark transition">
                         Kapat
                       </button>
                     </div>
@@ -1001,8 +993,7 @@ export default function CustomOrderPage() {
       {showDesignModal && (
         <div
           ref={modalRef}
-          className="fixed inset-0 z-50 bg-black/50 overflow-y-auto"
-        >
+          className="fixed inset-0 z-50 bg-black/50 overflow-y-auto">
           <div className="bg-white w-full max-w-2xl mx-auto my-10 rounded-xl overflow-hidden shadow-lg p-6 space-y-4">
             <h2 className="text-xl font-bold text-center">Baskı Ayarları</h2>
             {/* Kontroller */}
@@ -1010,8 +1001,7 @@ export default function CustomOrderPage() {
               <div className="flex flex-col space-y-1">
                 <label
                   htmlFor="side"
-                  className="text-sm font-medium text-gray-700"
-                >
+                  className="text-sm font-medium text-gray-700">
                   Baskı Yüzü
                 </label>
                 <select
@@ -1023,8 +1013,7 @@ export default function CustomOrderPage() {
                       ...prev,
                       side: e.target.value,
                     }))
-                  }
-                >
+                  }>
                   <option value="front">Ön Yüz</option>
                   <option value="back">Arka Yüz</option>
                 </select>
@@ -1033,8 +1022,7 @@ export default function CustomOrderPage() {
               <div className="flex flex-col space-y-1">
                 <label
                   htmlFor="size"
-                  className="text-sm font-medium text-gray-700"
-                >
+                  className="text-sm font-medium text-gray-700">
                   Baskı Boyutu
                 </label>
                 <select
@@ -1046,8 +1034,7 @@ export default function CustomOrderPage() {
                       ...prev,
                       size: e.target.value,
                     }))
-                  }
-                >
+                  }>
                   <option value="small">Küçük</option>
                   <option value="medium">Orta</option>
                   <option value="large">Büyük</option>
@@ -1059,15 +1046,13 @@ export default function CustomOrderPage() {
             <div className="w-full flex justify-center">
               <div
                 ref={designAreaRef}
-                className="relative bg-gray-100 rounded-lg flex items-center justify-center w-[300px] md:w-[360px] h-[400px] md:h-[480px]"
-              >
+                className="relative bg-gray-100 rounded-lg flex items-center justify-center w-[300px] md:w-[360px] h-[400px] md:h-[480px]">
                 <div
                   className="absolute border-2 border-red-500"
                   style={{
                     ...getPrintArea(),
                     pointerEvents: "none",
-                  }}
-                ></div>
+                  }}></div>
                 <img
                   src={`/${productType}-${designConfig.side}-1.png`}
                   alt={`${productType} ${designConfig.side}`}
@@ -1122,8 +1107,7 @@ export default function CustomOrderPage() {
             <div className="text-center">
               <button
                 onClick={() => handleCancel(0)}
-                className="px-4 py-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 mr-4"
-              >
+                className="px-4 py-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 mr-4">
                 Vazgeç
               </button>
               <button
@@ -1132,8 +1116,7 @@ export default function CustomOrderPage() {
                   setFinalDesignDataUrl(dataUrl);
                   setShowDesignModal(false);
                 }}
-                className="bg-primary text-white px-6 py-2 rounded-full font-semibold"
-              >
+                className="bg-primary text-white px-6 py-2 rounded-full font-semibold">
                 Onayla
               </button>
             </div>

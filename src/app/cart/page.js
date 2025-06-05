@@ -56,7 +56,7 @@ export default function CartPage() {
                   {item.name}
                 </h2>
                 <p className="text-sm text-gray-500 mb-2">
-                  Birim Fiyat: {item.selectedVariant?.price?.toFixed(2)}₺
+                  Birim Fiyat: {item?.price?.toFixed(2)}₺
                 </p>
 
                 {item.selectedVariant && (
@@ -92,7 +92,7 @@ export default function CartPage() {
 
             <div className="flex flex-col items-end justify-between">
               <span className="text-primary font-bold text-lg">
-                {(item.selectedVariant?.price * item.quantity).toFixed(2)}₺
+                {(item?.price * item.quantity).toFixed(2)} ₺
               </span>
               <button
                 onClick={() => {

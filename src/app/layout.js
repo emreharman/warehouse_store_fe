@@ -25,18 +25,6 @@ export default function RootLayout({ children }) {
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-             window.dataLayer = window.dataLayer || [];
-             function gtag(){dataLayer.push(arguments);}
-             gtag('js', new Date());
-             gtag('config', 'G-8T0TFYNXRR');
-             `,
-          }}
-        />
-        {/* <Script
-          id="gtag-init"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
@@ -45,7 +33,7 @@ export default function RootLayout({ children }) {
               });
             `,
           }}
-        /> */}
+        />
       </head>
       <body className="h-full">
         <Providers>

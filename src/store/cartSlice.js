@@ -38,7 +38,7 @@ export const addItemToCart = createAsyncThunk('cart/addItem', async (item, { get
     const items = loadFromLocalStorage()
     items.push(item)
     saveToLocalStorage(items)
-    const totalPrice = items.reduce((sum, i) => sum + (i.selectedVariant?.price || 0) * i.quantity, 0)
+    const totalPrice = items.reduce((sum, i) => sum + (i?.price || 0) * i?.quantity, 0)
     return { items, totalPrice }
   }
 })
