@@ -22,6 +22,7 @@ import { supabase } from "../../lib/supabase";
 import html2canvas from "html2canvas";
 import { base64ToBlob } from "../../utils/base64ToBlog";
 import { useRouter } from "next/navigation";
+import { useCart } from "../../hooks/useCart";
 
 export default function CustomOrderPage() {
   const fileInputRef = useRef(null);
@@ -68,7 +69,7 @@ export default function CustomOrderPage() {
     quality: "",
     fit: "",
   });
-
+  const { add } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [productType, setProductType] = useState("t");
 
@@ -385,6 +386,54 @@ export default function CustomOrderPage() {
       setUploading(false);
     }
   };
+
+  const handleAddToCart = async () => {
+    if (!selectedVariant.color || !selectedVariant.size) {
+      toast.error("Lütfen varyant seçeneklerini seçin.");
+      return;
+    }
+
+    if (!files.length) {
+      toast.error("Lütfen bir tasarım dosyası yükleyin.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // 1. Tasarımı Supabase'e yükle
+      const designFileName = `custom-${Date.now()}-${files[0].name}`;
+      const { error: designUploadError } = await supabase.storage
+        .from("warehouse")
+        .upload(designFileName, files[0]);
+
+      if (designUploadError) throw designUploadError;
+
+      const { data: designUploadUrl, error: designUploadUrlError } =
+        await supabase.storage.from("warehouse").getPublicUrl(designFileName);
+
+      if (designUploadUrlError) throw designUploadUrlError;
+
+      // 2. Sepete ekle
+      add({
+        id: `custom-${Date.now()}`,
+        name: "Özel Tasarım Ürün",
+        image: designUploadUrl.publicUrl,
+        price: 450,
+        quantity,
+        selectedVariant,
+      });
+
+      toast.success("Ürün sepete eklendi!");
+      setShowDesignModal(false);
+    } catch (err) {
+      toast.error("Sepete ekleme sırasında bir hata oluştu.");
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
@@ -705,7 +754,7 @@ export default function CustomOrderPage() {
                           : "bg-primary text-white hover:bg-primary/90"
                       }`}
                     >
-                      Ödemeye Geç
+                      Sonraki Adım
                     </button>
                   </div>
                 </>
@@ -761,7 +810,7 @@ export default function CustomOrderPage() {
                     </div>
 
                     {/* Kredi Kartı Bilgileri */}
-                    <div className="space-y-4">
+                    {/* <div className="space-y-4">
                       <h2 className="text-lg font-semibold text-gray-700">
                         Kredi Kartı Bilgileri
                       </h2>
@@ -812,10 +861,10 @@ export default function CustomOrderPage() {
                           required
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Sözleşmeler */}
-                    <div className="space-y-4">
+                    {/* <div className="space-y-4">
                       <h2 className="text-lg font-semibold text-gray-700">
                         Sözleşmeler
                       </h2>
@@ -850,7 +899,7 @@ export default function CustomOrderPage() {
                           gerekir.
                         </p>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* Butonlar */}
                     <div className="flex flex-col md:flex-row gap-4">
@@ -862,17 +911,14 @@ export default function CustomOrderPage() {
                         Önceki Adım
                       </button>
                       <button
-                        type="submit"
-                        disabled={!allAgreementsAccepted || uploading}
-                        className={`relative overflow-hidden group w-full py-4 px-6 rounded-full ${
-                          allAgreementsAccepted
-                            ? "bg-primary text-white"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        } text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
+                        type="button"
+                        onClick={handleAddToCart}
+                        // disabled={!allAgreementsAccepted || uploading}
+                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
                       >
                         <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
                         <span className="relative z-10 flex items-center gap-2">
-                          🚀 <span>Ödemeyi Tamamla</span>
+                          Sepete Ekle
                         </span>
                       </button>
                     </div>
