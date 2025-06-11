@@ -9,11 +9,6 @@ import variantOptionsReducer from "./variantOptionsSlice"
 import authReducer from "./authSlice"
 
 // Sadece cart ve auth slice'larını persist et
-const cartPersistConfig = {
-  key: "cart",
-  storage,
-  version: 1,
-}
 const authPersistConfig = {
   key: "auth",
   storage,
@@ -24,7 +19,7 @@ const rootReducer = combineReducers({
   category: categoryReducer, // will not persist
   product: productReducer,   // will not persist
   variantOptions: variantOptionsReducer, // will not persist
-  cart: persistReducer(cartPersistConfig, cartReducer),
+  cart: cartReducer,
   auth: persistReducer(authPersistConfig, authReducer),
 })
 

@@ -25,6 +25,12 @@ import { useRouter } from "next/navigation";
 import { useCart } from "../../hooks/useCart";
 import { getCustomerProfile } from "../../store/authSlice";
 
+const prices = {
+  t: 480,
+  h: 640,
+  c: 390,
+};
+
 export default function CustomOrderPage() {
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
@@ -74,6 +80,7 @@ export default function CustomOrderPage() {
   const { add } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [productType, setProductType] = useState("t");
+  const [addedToCart, setAddedToCart] = useState(false);
 
   const agreementLinks = [
     {
@@ -396,7 +403,12 @@ export default function CustomOrderPage() {
   };
 
   const handleAddToCart = async () => {
-    if (!selectedVariant.color || !selectedVariant.size) {
+    if (
+      !selectedVariant.color ||
+      !selectedVariant.size ||
+      !selectedVariant.quality ||
+      !selectedVariant.fit
+    ) {
       toast.error("Lütfen varyant seçeneklerini seçin.");
       return;
     }
@@ -422,24 +434,101 @@ export default function CustomOrderPage() {
 
       if (designUploadUrlError) throw designUploadUrlError;
 
-      // 2. Sepete ekle
-      add({
-        id: `custom-${Date.now()}`,
-        name: "Özel Tasarım Ürün",
-        image: designUploadUrl.publicUrl,
-        price: 450,
-        quantity,
-        selectedVariant,
-      });
+      // Tasarım URL'ini hazırlıyoruz
+      const designFiles = [designUploadUrl.publicUrl];
+
+      const finalDesignFileName = `custom-${Date.now()}-finalDesign`;
+      const { data: finalDesignUploadData, error: finalDesignUploadError } =
+        await supabase.storage
+          .from("warehouse")
+          .upload(finalDesignFileName, base64ToBlob(finalDesignDataUrl));
+      if (finalDesignUploadError) throw finalDesignUploadError;
+      const { data: finalDesignUploadUrl, error: finalDesignUploadUrlError } =
+        await supabase.storage
+          .from("warehouse")
+          .getPublicUrl(finalDesignFileName);
+
+      // 2. Sipariş kalemi verilerini oluştur
+      const orderItem = {
+        id: new Date().getTime().toString(),
+        productType: productType, // Ürün tipi, örneğin "t" - Tişört
+        selectedVariant: selectedVariant, // Seçilen varyant
+        quantity: quantity, // Adet
+        designFiles: designFiles, // Tasarım dosyası URL'leri
+        designMeta: {
+          side: designConfig.side,
+          size: designConfig.size,
+          position: designConfig.position,
+          pixelPosition: dragPosition,
+          fileName: files[0]?.name,
+          finalDesign: finalDesignUploadUrl.publicUrl, // final tasarım linki
+        },
+        note: form.note || "", // Sipariş notu
+        price: prices[productType],
+      };
+
+      // 3. Sepete ekleme işlemi
+      add({ ...orderItem });
 
       toast.success("Ürün sepete eklendi!");
       setShowDesignModal(false);
+      setAddedToCart(true);
     } catch (err) {
       toast.error("Sepete ekleme sırasında bir hata oluştu.");
       console.error(err);
     } finally {
       setUploading(false);
     }
+  };
+
+  const resetAllStates = () => {
+    setStep(0);
+    setIsDragging(false);
+    setDragPosition({ x: 150, y: 150 });
+    setImageAspectRatio(1);
+    setFiles([]);
+    setUploading(false);
+    setShowDesignModal(false);
+    setFinalDesignDataUrl(null);
+    setIsMobile(true);
+    setForm({
+      name: customer?.name,
+      phone: customer?.phone,
+      email: customer?.email,
+      address: {
+        label: "Ev",
+        line1: "",
+        city: "",
+        postalCode: "",
+        country: "Türkiye",
+      },
+      note: "",
+    });
+    setVariantOptions({
+      color: [],
+      size: [],
+      quality: [],
+      fit: [],
+    });
+    setSelectedVariant({
+      color: "",
+      size: "",
+      quality: "",
+      fit: "",
+    });
+    setQuantity(1);
+    setProductType("t");
+    setAddedToCart(false);
+    setAgreementsAccepted(
+      Object.fromEntries(agreementLinks.map((doc) => [doc.title, false]))
+    );
+    setSelectedAgreementUrl(null);
+    setDesignConfig({
+      side: "front",
+      size: "medium",
+      position: "center",
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -591,29 +680,46 @@ export default function CustomOrderPage() {
                       </div>
                     )}
                   </div>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setStep(1)}
-                      disabled={
-                        !selectedVariant.color ||
-                        !selectedVariant.fit ||
-                        !selectedVariant.quality ||
-                        !selectedVariant.size ||
-                        !files.length
-                      }
-                      className={`w-full py-4 px-6 rounded-full text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
-                        !selectedVariant.color ||
-                        !selectedVariant.fit ||
-                        !selectedVariant.quality ||
-                        !selectedVariant.size ||
-                        !files.length
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-primary text-white hover:bg-primary/90"
-                      }`}>
-                      Sonraki Adım
-                    </button>
-                  </div>
+                  {!addedToCart ? (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={
+                          !selectedVariant.color ||
+                          !selectedVariant.fit ||
+                          !selectedVariant.quality ||
+                          !selectedVariant.size ||
+                          !files.length
+                        }
+                        className={`w-full py-4 px-6 rounded-full text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                          !selectedVariant.color ||
+                          !selectedVariant.fit ||
+                          !selectedVariant.quality ||
+                          !selectedVariant.size ||
+                          !files.length
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-primary text-white hover:bg-primary/90"
+                        }`}>
+                        Sepete Ekle
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={resetAllStates}
+                        className={`w-full py-4 px-6 mb-4 rounded-full text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 bg-gray-200`}>
+                        Yeni Tasarla
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/cart")}
+                        className={`w-full py-4 px-6 rounded-full text-lg text-white font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 bg-primary`}>
+                        Sepete Git
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
               {step === 1 && (
@@ -921,7 +1027,7 @@ export default function CustomOrderPage() {
               )}
 
               {/* Sözleşme Modalı */}
-              {selectedAgreementUrl && (
+              {/* {selectedAgreementUrl && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
                   <div className="bg-white max-w-3xl w-full rounded-xl overflow-hidden shadow-lg">
                     <div className="flex justify-between items-center p-4 border-b">
@@ -948,7 +1054,7 @@ export default function CustomOrderPage() {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Desktop buton */}
               {/* <div className="hidden md:block">

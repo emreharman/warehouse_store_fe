@@ -18,6 +18,7 @@ export const ENDPOINTS = {
   // 🛒 Sepet
   GET_CART: "/customer/cart",
   ADD_TO_CART: "/customer/cart",
-  REMOVE_FROM_CART: (itemId) => `/customer/cart/${itemId}`,
+  REMOVE_FROM_CART: "/customer/cart/delete",
   CLEAR_CART: "/customer/cart",
+  CREATE_PAYMENT_URL: "/orders/create-payment-link"
 };
