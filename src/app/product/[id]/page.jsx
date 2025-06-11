@@ -25,6 +25,7 @@ export default function ProductDetailPage() {
     fit: "",
   });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedProductType, setSelectedProductType] = useState("");
 
   const { items: cartItems, add, remove } = useCart();
 
@@ -103,6 +104,12 @@ export default function ProductDetailPage() {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleProductTypeChange = (e) => {
+    const type = e.target.value;
+    setSelectedProductType(type);
+    sessionStorage.setItem("productType", type); // Ürün tipi sessionStorage'a kaydedilir
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -145,14 +152,24 @@ export default function ProductDetailPage() {
             </p>
 
             <div className="flex items-center gap-3 mt-2">
-              {discount > 0 && (
+              {/* Ürün Tipi Seçimi */}
+              <select
+                value={selectedProductType}
+                onChange={handleProductTypeChange}
+                className="input">
+                <option value="">Ürün Tipini Seçin</option>
+                <option value="t">Tişört</option>
+                <option value="h">Hoodie</option>
+                <option value="c">Çocuk</option>
+              </select>
+              {/*  {discount > 0 && (
                 <span className="text-gray-400 line-through text-lg">
                   {price.toFixed(2)}₺
                 </span>
               )}
               <span className="text-primary text-2xl font-semibold">
                 {finalPrice.toFixed(2)}₺
-              </span>
+              </span> */}
             </div>
 
             {/* Varyant Seçimleri */}
@@ -215,6 +232,7 @@ export default function ProductDetailPage() {
                       );
                       window.location.href = "/custom";
                     }}
+                    disabled={!selectedProductType}
                     className="w-full py-4 rounded-xl text-lg font-semibold shadow-md bg-primary text-white hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg transition">
                     Tasarıma Geç
                   </button>

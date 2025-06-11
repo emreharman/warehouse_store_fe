@@ -29,7 +29,7 @@ export default function HomePage() {
           ))}
         </div>
       </div>
-      {loading && <Spinner />}
+      {loading && products?.length > 0 && <Spinner />}
     </div>
   );
 }

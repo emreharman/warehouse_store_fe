@@ -122,11 +122,11 @@ export default function ProductCard({ product }) {
               </button>
             </>
           )}
-          {discount > 0 && (
+          {/* {discount > 0 && (
             <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full shadow">
               %{discount} İndirim
             </span>
-          )}
+          )} */}
         </div>
 
         {/* Bilgiler */}
@@ -141,14 +141,14 @@ export default function ProductCard({ product }) {
           </div>
           <div className="mt-auto flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
-              {discount > 0 && (
+              {/* {discount > 0 && (
                 <span className="text-gray-400 line-through">
                   {price.toFixed(2)}₺
                 </span>
-              )}
-              <span className="font-bold text-primary">
+              )} */}
+              {/* <span className="font-bold text-primary">
                 {finalPrice.toFixed(2)}₺
-              </span>
+              </span> */}
             </div>
           </div>
         </div>
@@ -156,31 +156,16 @@ export default function ProductCard({ product }) {
 
       {/* Sepet butonu */}
       <div className="absolute bottom-3 right-3">
-        {quantity > 0 ? (
-          <div className="flex items-center gap-2 bg-primary text-white rounded-full px-3 py-1 shadow-md">
-            <button
-              onClick={handleDecrement}
-              className="p-1 hover:opacity-80 transition">
-              <Minus className="w-4 h-4" />
-            </button>
-            <span className="text-sm font-medium">{quantity}</span>
-            <button
-              onClick={handleAddClick}
-              className="p-1 hover:opacity-80 transition">
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleAddClick}
-            className="flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition">
-            {product?.type === "o" ? (
-              <Sparkles className="w-4 h-4" />
-            ) : (
-              <ShoppingCart className="w-4 h-4" />
-            )}
-          </button>
-        )}
+        <button
+          onClick={handleAddClick}
+          className="flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition">
+          {product?.type === "o" ? (
+            <Sparkles className="w-4 h-4" />
+            
+          ) : (
+            <ShoppingCart className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
       {/* Varyant Seçim Modali */}

@@ -13,7 +13,7 @@ export function useCart() {
   const { items, totalPrice, status } = useSelector((state) => state.cart);
 
   const add = (item) => dispatch(addItemToCart(item));
-  const remove = (index) => dispatch(removeItemFromCart(index));
+  const remove = (item) => dispatch(removeItemFromCart(item));
   const clear = () => dispatch(clearCart());
   const fetch = () => dispatch(fetchCart());
 

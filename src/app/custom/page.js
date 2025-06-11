@@ -24,6 +24,7 @@ import { base64ToBlob } from "../../utils/base64ToBlog";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../hooks/useCart";
 import { getCustomerProfile } from "../../store/authSlice";
+import Spinner from "../../components/Spinner";
 
 const prices = {
   t: 480,
@@ -81,6 +82,7 @@ export default function CustomOrderPage() {
   const [quantity, setQuantity] = useState(1);
   const [productType, setProductType] = useState("t");
   const [addedToCart, setAddedToCart] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const agreementLinks = [
     {
@@ -420,6 +422,7 @@ export default function CustomOrderPage() {
 
     try {
       setUploading(true);
+      setLoading(true);
 
       // 1. Tasarımı Supabase'e yükle
       const designFileName = `custom-${Date.now()}-${files[0].name}`;
@@ -473,11 +476,14 @@ export default function CustomOrderPage() {
       toast.success("Ürün sepete eklendi!");
       setShowDesignModal(false);
       setAddedToCart(true);
+      setLoading(false);
     } catch (err) {
       toast.error("Sepete ekleme sırasında bir hata oluştu.");
+      setLoading(false);
       console.error(err);
     } finally {
       setUploading(false);
+      setLoading(false);
     }
   };
 
@@ -1229,6 +1235,7 @@ export default function CustomOrderPage() {
           </div>
         </div>
       )}
+      {loading && <Spinner />}
     </>
   );
 }

@@ -12,10 +12,10 @@ import api from "../../lib/api";
 import { ENDPOINTS } from "../../constants/endpoints";
 
 const agreementLinks = [
-  {
+  /* {
     title: "Ön Bilgilendirme Formu",
     url: "https://vggwhpplgaemfxehakka.supabase.co/storage/v1/object/public/warehouse//2_On_Bilgilendirme_Formu.pdf",
-  },
+  }, */
   {
     title: "KVKK Politikası",
     url: "https://vggwhpplgaemfxehakka.supabase.co/storage/v1/object/public/warehouse//3_KVKK_Politikasi.pdf",
@@ -251,7 +251,7 @@ export default function CheckoutPage() {
 
               <div className="flex gap-4">
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => router.push("/cart")}
                   className="w-full py-3 px-4 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300">
                   Geri
                 </button>
