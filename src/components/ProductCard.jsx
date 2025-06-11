@@ -25,6 +25,7 @@ export default function ProductCard({ product }) {
     fit: "",
   });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedProductType, setSelectedProductType] = useState("");
 
   const image = product.images?.[0] || "/placeholder.png";
   const variant = product.variants?.[0];
@@ -98,8 +99,14 @@ export default function ProductCard({ product }) {
     );
   };
 
+  const handleProductTypeChange = (e) => {
+    const type = e.target.value;
+    setSelectedProductType(type);
+    sessionStorage.setItem("productType", type); // Ürün tipi sessionStorage'a kaydedilir
+  };
+
   return (
-    <div className="flex flex-col h-[250px] md:h-[450px] w-full max-w-sm rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+    <div className="flex flex-col h-auto md:h-[450px] w-full max-w-sm rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden relative">
       <Link href={`/product/${product._id}`} className="flex flex-col h-full">
         {/* Slider alanı */}
         <div className="relative h-[260px] w-full flex items-center justify-center bg-gray-100 overflow-hidden">
@@ -154,19 +161,33 @@ export default function ProductCard({ product }) {
         </div>
       </Link>
 
-      {/* Sepet butonu */}
-      <div className="absolute bottom-3 right-3">
-        <button
-          onClick={handleAddClick}
-          className="flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition">
-          {product?.type === "o" ? (
-            <Sparkles className="w-4 h-4" />
-            
-          ) : (
-            <ShoppingCart className="w-4 h-4" />
-          )}
-        </button>
-      </div>
+      {/* Ürün Tipi Seçimi ve Sepet Butonu */}
+      {product?.type === "o" && (
+        <div className="mb-4 w-full px-2 flex items-center gap-4 justify-between">
+          {/* Ürün Tipi Seçimi */}
+          <select
+            value={selectedProductType}
+            onChange={handleProductTypeChange}
+            className="input w-1/2">
+            <option value="">Ürün Tipini Seçin</option>
+            <option value="t">Tişört</option>
+            <option value="h">Hoodie</option>
+            <option value="c">Çocuk</option>
+          </select>
+
+          {/* Sepet butonu */}
+          <button
+            onClick={handleAddClick}
+            disabled={product?.type === "o" && !selectedProductType}
+            className="flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition">
+            {product?.type === "o" ? (
+              <Sparkles className="w-4 h-4" />
+            ) : (
+              <ShoppingCart className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Varyant Seçim Modali */}
       {showVariantModal && (

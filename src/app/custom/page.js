@@ -4,20 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import api from "../../lib/api";
 import { toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  User,
-  Phone,
-  Mail,
-  Home,
-  Shirt,
-  Layers,
-  ClipboardList,
-  Minus,
-  Plus,
-  Rocket,
-  Upload,
-  MapPin,
-} from "lucide-react";
+import { Shirt, Layers, ClipboardList, Upload } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import html2canvas from "html2canvas";
 import { base64ToBlob } from "../../utils/base64ToBlog";
@@ -83,6 +70,7 @@ export default function CustomOrderPage() {
   const [productType, setProductType] = useState("t");
   const [addedToCart, setAddedToCart] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [redirectedProduct, setRedirectedProduct] = useState(null);
 
   const agreementLinks = [
     {
@@ -104,9 +92,6 @@ export default function CustomOrderPage() {
   );
   const [selectedAgreementUrl, setSelectedAgreementUrl] = useState(null);
 
-  const allAgreementsAccepted =
-    Object.values(agreementsAccepted).every(Boolean);
-
   const [designConfig, setDesignConfig] = useState({
     side: "front", // front | back
     size: "medium", // small | medium | large
@@ -118,12 +103,6 @@ export default function CustomOrderPage() {
       router.push("/user");
     }
   }, [customer]);
-
-  useEffect(() => {
-    if (!!customer && !customer?.addresses?.length) {
-      dispatch(getCustomerProfile());
-    }
-  }, [customer?.addresses]);
 
   const getPrintArea = () => {
     const container = designAreaRef.current?.getBoundingClientRect();
@@ -247,7 +226,7 @@ export default function CustomOrderPage() {
   }, [showDesignModal, designConfig.size, files]);
   const captureFinalDesign = async () => {
     if (!designAreaRef.current) return;
-    const canvas = await html2canvas(designAreaRef.current);
+    const canvas = await html2canvas(designAreaRef.current, { useCORS: true });
     const dataUrl = canvas.toDataURL("image/png");
     setFinalDesignDataUrl(dataUrl);
     return dataUrl;
@@ -343,67 +322,6 @@ export default function CustomOrderPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setUploading(true);
-    let designFiles = [];
-
-    try {
-      const designFileName = `custom-${Date.now()}-${files[0].name}`;
-      const { data: designUploadData, error: designUploadError } =
-        await supabase.storage
-          .from("warehouse")
-          .upload(designFileName, files[0]);
-      if (designUploadError) throw designUploadError;
-      const { data: designUploadUrl, error: designUploadUrlError } =
-        await supabase.storage.from("warehouse").getPublicUrl(designFileName);
-      designFiles.push(designUploadUrl.publicUrl);
-
-      const finalDesignFileName = `custom-${Date.now()}-finalDesign`;
-      const { data: finalDesignUploadData, error: finalDesignUploadError } =
-        await supabase.storage
-          .from("warehouse")
-          .upload(finalDesignFileName, base64ToBlob(finalDesignDataUrl));
-      if (finalDesignUploadError) throw finalDesignUploadError;
-      const { data: finalDesignUploadUrl, error: finalDesignUploadUrlError } =
-        await supabase.storage
-          .from("warehouse")
-          .getPublicUrl(finalDesignFileName);
-
-      const payload = {
-        customer: form,
-        order: {
-          type: "custom",
-          note: form.note,
-          items: [
-            {
-              productType, // örn: "t", "h", "c"
-              selectedVariant,
-              quantity,
-              designFiles,
-              designMeta: {
-                ...designConfig,
-                pixelPosition: dragPosition,
-                fileName: files[0]?.name,
-                finalDesign: finalDesignUploadUrl.publicUrl,
-              },
-            },
-          ],
-          totalPrice: 450 * quantity, // opsiyonel, backend hesaplayacaksa kaldırılabilir
-          status: "pre_payment", // opsiyonel
-        },
-      };
-      console.log("payload", payload);
-
-      await api.post("/orders", payload);
-      toast.success("Sipariş başarıyla oluşturuldu!");
-    } catch (err) {
-      toast.error("Hata oluştu");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleAddToCart = async () => {
     if (
       !selectedVariant.color ||
@@ -415,7 +333,7 @@ export default function CustomOrderPage() {
       return;
     }
 
-    if (!files.length) {
+    if (!redirectedProduct && !files.length) {
       toast.error("Lütfen bir tasarım dosyası yükleyin.");
       return;
     }
@@ -425,7 +343,10 @@ export default function CustomOrderPage() {
       setLoading(true);
 
       // 1. Tasarımı Supabase'e yükle
-      const designFileName = `custom-${Date.now()}-${files[0].name}`;
+      let designFileName = "";
+      if (!redirectedProduct)
+        designFileName = `custom-${Date.now()}-${files[0].name}`;
+      else designFileName = `custom-${Date.now()}-${redirectedProduct?.name}`;
       const { error: designUploadError } = await supabase.storage
         .from("warehouse")
         .upload(designFileName, files[0]);
@@ -541,6 +462,19 @@ export default function CustomOrderPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [step]);
 
+  useEffect(() => {
+    if (
+      !!sessionStorage.getItem("productType") &&
+      !!JSON.parse(sessionStorage.getItem("custom_product"))
+    ) {
+      setProductType(sessionStorage.getItem("productType"));
+      setRedirectedProduct(
+        JSON.parse(sessionStorage.getItem("custom_product"))
+      );
+      setShowDesignModal(true);
+    }
+  }, []);
+
   return (
     <>
       {/* Arka plan çizgili zemin */}
@@ -561,10 +495,7 @@ export default function CustomOrderPage() {
               Özel Tişört Siparişi
             </h1>
 
-            <form
-              onSubmit={handleSubmit}
-              id="custom-order-form"
-              className="space-y-10">
+            <form id="custom-order-form" className="space-y-10">
               {step === 0 && (
                 <>
                   {/* Varyantlar */}
@@ -610,32 +541,7 @@ export default function CustomOrderPage() {
                     <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
                       <ClipboardList className="w-5 h-5" /> Sipariş Detayları
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                      <div className="flex items-center justify-between gap-4 border rounded-lg px-4 py-2">
-                        <span className="text-sm font-medium text-gray-700">
-                          Adet
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setQuantity((q) => Math.max(1, q - 1))
-                            }
-                            className="p-2 bg-gray-100 rounded hover:bg-gray-200">
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <span className="w-8 text-center font-semibold">
-                            {quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setQuantity((q) => q + 1)}
-                            className="p-2 bg-gray-100 rounded hover:bg-gray-200">
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 items-start">
                       <textarea
                         name="note"
                         placeholder="Özel Sipariş Notu (isteğe bağlı)"
@@ -648,30 +554,37 @@ export default function CustomOrderPage() {
                   {/* Dosya Yükleme */}
                   <div className="space-y-4">
                     <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                      <Upload className="w-5 h-5" /> Tasarım Dosyası Yükle
+                      <Upload className="w-5 h-5" />{" "}
+                      {!!redirectedProduct
+                        ? "Yüklenen Tasarım Dosyası"
+                        : "Tasarım Dosyası Yükle"}
                     </h2>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="input"
-                      ref={fileInputRef}
-                      key={files.length}
-                    />
-                    <p className="text-sm text-gray-500">
-                      Maksimum dosya boyutu: <strong>5MB</strong>. Yalnızca
-                      görsel formatları desteklenir.
-                    </p>
-                    {files.length > 0 && (
-                      <div className="flex flex-wrap gap-4">
-                        {files.map((file, i) => (
-                          <div
-                            key={i}
-                            className="bg-gray-100 border rounded-lg px-3 py-1 text-sm">
-                            {file.name}
+                    {!redirectedProduct && (
+                      <>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="input"
+                          ref={fileInputRef}
+                          key={files.length}
+                        />
+                        <p className="text-sm text-gray-500">
+                          Maksimum dosya boyutu: <strong>5MB</strong>. Yalnızca
+                          görsel formatları desteklenir.
+                        </p>
+                        {files.length > 0 && (
+                          <div className="flex flex-wrap gap-4">
+                            {files.map((file, i) => (
+                              <div
+                                key={i}
+                                className="bg-gray-100 border rounded-lg px-3 py-1 text-sm">
+                                {file.name}
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     )}
                     {finalDesignDataUrl && (
                       <div className="mt-4">
@@ -695,15 +608,13 @@ export default function CustomOrderPage() {
                           !selectedVariant.color ||
                           !selectedVariant.fit ||
                           !selectedVariant.quality ||
-                          !selectedVariant.size ||
-                          !files.length
+                          !selectedVariant.size
                         }
                         className={`w-full py-4 px-6 rounded-full text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
                           !selectedVariant.color ||
                           !selectedVariant.fit ||
                           !selectedVariant.quality ||
-                          !selectedVariant.size ||
-                          !files.length
+                          !selectedVariant.size
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                             : "bg-primary text-white hover:bg-primary/90"
                         }`}>
@@ -728,380 +639,10 @@ export default function CustomOrderPage() {
                   )}
                 </>
               )}
-              {step === 1 && (
-                <>
-                  {/* Müşteri Bilgileri */}
-                  <div className="space-y-4">
-                    <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
-                      <User className="w-5 h-5" /> Müşteri Bilgileri
-                    </h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        name="name"
-                        placeholder="Ad Soyad"
-                        value={form.name}
-                        onChange={handleChange}
-                        required
-                        className="input"
-                      />
-                      <input
-                        name="phone"
-                        placeholder="Telefon"
-                        value={form.phone}
-                        onChange={handleChange}
-                        required
-                        className="input"
-                      />
-                      <input
-                        name="email"
-                        placeholder="E-posta"
-                        value={form.email}
-                        onChange={handleChange}
-                        className="input"
-                      />
-                    </div>
-
-                    <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700 mt-6">
-                      <MapPin className="w-5 h-5" /> Adres Bilgileri
-                    </h2>
-
-                    {Array.isArray(customer?.addresses) &&
-                      customer.addresses.length > 0 && (
-                        <div className="flex gap-3 overflow-x-auto py-2 scrollbar-hide">
-                          {customer.addresses.map((addr, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() =>
-                                setForm((prev) => ({
-                                  ...prev,
-                                  address: {
-                                    label: addr.label || "Ev",
-                                    line1: addr.line1 || "",
-                                    city: addr.city || "",
-                                    postalCode: addr.postalCode || "",
-                                    country: addr.country || "Türkiye",
-                                  },
-                                }))
-                              }
-                              className="flex-shrink-0 px-4 py-2 border rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition whitespace-nowrap">
-                              {addr.label} - {addr.line1}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <select
-                        name="address.label"
-                        value={form.address.label}
-                        onChange={handleChange}
-                        required
-                        className="input">
-                        <option value="Ev">Ev</option>
-                        <option value="İş">İş</option>
-                        <option value="Diğer">Diğer</option>
-                      </select>
-
-                      <input
-                        name="address.line1"
-                        placeholder="Adres (Sokak, Mahalle, No, vb.)"
-                        value={form.address.line1}
-                        onChange={handleChange}
-                        required
-                        className="input"
-                      />
-                      <input
-                        name="address.city"
-                        placeholder="Şehir"
-                        value={form.address.city}
-                        onChange={handleChange}
-                        required
-                        className="input"
-                      />
-                      <input
-                        name="address.postalCode"
-                        placeholder="Posta Kodu"
-                        value={form.address.postalCode}
-                        onChange={handleChange}
-                        className="input"
-                      />
-                      <input
-                        name="address.country"
-                        placeholder="Ülke"
-                        value={form.address.country}
-                        onChange={handleChange}
-                        required
-                        className="input"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setStep(0)}
-                      className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">
-                      Önceki Adım
-                    </button>
-                    <button
-                      type="button"
-                      disabled={
-                        !form.name ||
-                        !form.email ||
-                        !form.phone ||
-                        !form.address.label ||
-                        !form.address.city ||
-                        !form.address.country ||
-                        !form.address.line1
-                      }
-                      onClick={() => setStep(2)}
-                      className={`w-full py-4 px-6 rounded-full font-semibold transition ${
-                        !form.name || !form.email || !form.phone
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-primary text-white hover:bg-primary/90"
-                      }`}>
-                      Sonraki Adım
-                    </button>
-                  </div>
-                </>
-              )}
-              {step === 2 && (
-                <>
-                  <div className="space-y-8">
-                    {/* Sipariş Özeti */}
-                    <div className="space-y-4 border p-4 rounded-xl bg-gray-50">
-                      <h2 className="text-lg font-semibold text-gray-700">
-                        Sipariş Özeti
-                      </h2>
-                      <div className="flex items-center gap-4">
-                        {/* Tasarım Görseli */}
-                        {finalDesignDataUrl && (
-                          <img
-                            src={finalDesignDataUrl}
-                            alt="Final Design"
-                            className="w-20 h-20 object-cover rounded border"
-                          />
-                        )}
-
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-800 font-medium">
-                            Özel Tişört
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Renk: <strong>{selectedVariant.color}</strong>,
-                            Beden: <strong>{selectedVariant.size}</strong>,
-                            Kalite: <strong>{selectedVariant.quality}</strong>,
-                            Kalıp: <strong>{selectedVariant.fit}</strong>
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Adet: {quantity}
-                          </p>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-800">
-                            {450 * quantity}₺
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="border-t pt-4 flex justify-between">
-                        <span className="font-medium text-gray-700">
-                          Toplam Tutar
-                        </span>
-                        <span className="text-lg font-bold text-primary">
-                          {450 * quantity}₺
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Kredi Kartı Bilgileri */}
-                    {/* <div className="space-y-4">
-                      <h2 className="text-lg font-semibold text-gray-700">
-                        Kredi Kartı Bilgileri
-                      </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          name="cardNumber"
-                          placeholder="Kart Numarası"
-                          maxLength={19}
-                          onChange={(e) => {
-                            e.target.value = e.target.value
-                              .replace(/\D/g, "")
-                              .replace(/(.{4})/g, "$1 ")
-                              .trim();
-                          }}
-                          className="input"
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="cardName"
-                          placeholder="Kart Üzerindeki İsim"
-                          className="input"
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="expiry"
-                          placeholder="MM/YY"
-                          maxLength={5}
-                          onChange={(e) => {
-                            e.target.value = e.target.value
-                              .replace(/\D/g, "")
-                              .replace(/^(\d{2})(\d{0,2})/, "$1/$2");
-                          }}
-                          className="input"
-                          required
-                        />
-                        <input
-                          type="text"
-                          name="cvc"
-                          placeholder="CVC"
-                          maxLength={3}
-                          onChange={(e) => {
-                            e.target.value = e.target.value.replace(/\D/g, "");
-                          }}
-                          className="input"
-                          required
-                        />
-                      </div>
-                    </div> */}
-
-                    {/* Sözleşmeler */}
-                    {/* <div className="space-y-4">
-                      <h2 className="text-lg font-semibold text-gray-700">
-                        Sözleşmeler
-                      </h2>
-                      {agreementLinks.map((doc) => (
-                        <div key={doc.title} className="flex items-start gap-2">
-                          <input
-                            type="checkbox"
-                            checked={agreementsAccepted[doc.title]}
-                            onChange={(e) =>
-                              setAgreementsAccepted((prev) => ({
-                                ...prev,
-                                [doc.title]: e.target.checked,
-                              }))
-                            }
-                            className="mt-1"
-                          />
-                          <div className="text-sm text-gray-700">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedAgreementUrl(doc.url)}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {doc.title}
-                            </button>{" "}
-                            belgesini okudum ve kabul ediyorum.
-                          </div>
-                        </div>
-                      ))}
-                      {!allAgreementsAccepted && (
-                        <p className="text-red-500 text-sm">
-                          Sipariş verebilmek için tüm sözleşmeleri onaylamanız
-                          gerekir.
-                        </p>
-                      )}
-                    </div> */}
-
-                    {/* Butonlar */}
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">
-                        Önceki Adım
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        // disabled={!allAgreementsAccepted || uploading}
-                        className="w-full py-4 px-6 rounded-full bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">
-                        <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-                        <span className="relative z-10 flex items-center gap-2">
-                          Sepete Ekle
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Sözleşme Modalı */}
-              {/* {selectedAgreementUrl && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-                  <div className="bg-white max-w-3xl w-full rounded-xl overflow-hidden shadow-lg">
-                    <div className="flex justify-between items-center p-4 border-b">
-                      <h2 className="text-lg font-bold">Sözleşme Önizleme</h2>
-                      <button
-                        className="text-gray-500 hover:text-gray-700"
-                        onClick={() => setSelectedAgreementUrl(null)}>
-                        ✕
-                      </button>
-                    </div>
-                    <div className="p-4 max-h-[75vh] overflow-y-auto">
-                      <iframe
-                        src={selectedAgreementUrl}
-                        title="Sözleşme PDF"
-                        className="w-full h-[60vh] border rounded"
-                      />
-                    </div>
-                    <div className="p-4 border-t text-right">
-                      <button
-                        onClick={() => setSelectedAgreementUrl(null)}
-                        className="bg-primary text-white font-semibold px-5 py-2 rounded-full hover:bg-primary-dark transition">
-                        Kapat
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )} */}
-
-              {/* Desktop buton */}
-              {/* <div className="hidden md:block">
-                <button
-                  type="submit"
-                  disabled={!allAgreementsAccepted || uploading}
-                  className={`relative overflow-hidden group w-full py-4 px-6 rounded-full ${
-                    allAgreementsAccepted
-                      ? "bg-primary text-white"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  } text-lg font-bold shadow-lg transition-all duration-300 flex items-center justify-center gap-2`}
-                >
-                  <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/20 via-white/60 to-white/20 opacity-40 transform skew-x-[-20deg] group-hover:animate-slide-shine z-0" />
-                  <span className="relative z-10 flex items-center gap-2">
-                    🚀 <span>Ödemeye Geç</span>
-                  </span>
-                </button>
-              </div> */}
             </form>
           </div>
         </div>
       </div>
-
-      {/* Mobil sticky buton */}
-      {/* <div className="md:hidden fixed bottom-4 left-0 right-0 z-40 flex justify-center px-4">
-        <button
-          type="submit"
-          form="custom-order-form"
-          disabled={!allAgreementsAccepted || uploading}
-          className={`relative overflow-hidden w-full max-w-md py-4 px-6 rounded-full ${
-            allAgreementsAccepted
-              ? "bg-primary text-white"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          } text-lg font-bold shadow-xl transition active:scale-95 flex items-center justify-center gap-2`}
-        >
-          <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-white/10 via-white/50 to-white/10 opacity-30 transform skew-x-[-20deg] animate-slide-shine z-0" />
-          <span className="relative z-10 flex items-center gap-2">
-            🚀 <span>Ödemeye Geç</span>
-          </span>
-        </button>
-      </div> */}
       {showDesignModal && (
         <div
           ref={modalRef}
@@ -1170,10 +711,44 @@ export default function CustomOrderPage() {
                   alt={`${productType} ${designConfig.side}`}
                   className="w-[250px] md:w-[360px] h-auto object-contain"
                 />
-                {files[0] && (
+                {files[0] && !redirectedProduct && (
                   <img
                     ref={dragRef}
                     src={URL.createObjectURL(files[0])}
+                    alt="Tasarım"
+                    draggable={false}
+                    className={`absolute object-contain ${getSizeStyle(
+                      designConfig.size
+                    )} transition-all`}
+                    onMouseDown={() => setIsDragging(true)}
+                    onTouchStart={() => setIsDragging(true)}
+                    style={{
+                      top: `${dragPosition.y}px`,
+                      left: `${dragPosition.x}px`,
+                      width:
+                        imageAspectRatio >= 1
+                          ? `${maxSize}px`
+                          : `${maxSize * imageAspectRatio}px`,
+                      height:
+                        imageAspectRatio < 1
+                          ? `${maxSize}px`
+                          : `${maxSize / imageAspectRatio}px`,
+                      position: "absolute",
+                      userSelect: "none",
+                      objectFit: "contain",
+                    }}
+                    onLoad={(e) => {
+                      const { naturalWidth, naturalHeight } = e.target;
+                      if (naturalWidth && naturalHeight) {
+                        setImageAspectRatio(naturalWidth / naturalHeight);
+                      }
+                    }}
+                  />
+                )}
+                {!!redirectedProduct && (
+                  <img
+                    ref={dragRef}
+                    src={redirectedProduct?.images?.[0]}
                     alt="Tasarım"
                     draggable={false}
                     className={`absolute object-contain ${getSizeStyle(
@@ -1225,6 +800,8 @@ export default function CustomOrderPage() {
               <button
                 onClick={async () => {
                   const dataUrl = await captureFinalDesign();
+                  console.log("dataUrl", dataUrl);
+
                   setFinalDesignDataUrl(dataUrl);
                   setShowDesignModal(false);
                 }}

@@ -23,7 +23,7 @@ export default function HomePage() {
 
       <div>
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tüm Ürünler</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {products.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}
