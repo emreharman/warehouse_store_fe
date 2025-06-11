@@ -8,7 +8,7 @@ import Script from "next/script";
 import CookieConsentComponent from "../components/CookieConsentComponent"
 
 export const metadata = {
-  title: "T-shirt Store",
+  title: "Kişiye Özel Giyim",
 };
 
 export default function RootLayout({ children }) {
@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
         <Providers>
           <ScrollToTop />
           <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen pb-6">{children}</main>
           <Toaster position="top-right" />
           <StickyCustomTeeButton />
           {/* ✅ CookieConsentComponent'i burada kullanıyoruz */}

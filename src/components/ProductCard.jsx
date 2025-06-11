@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import {
   ShoppingCart,
@@ -26,6 +26,7 @@ export default function ProductCard({ product }) {
   });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedProductType, setSelectedProductType] = useState("");
+  const productTypeSelectRef = useRef(null);
 
   const image = product.images?.[0] || "/placeholder.png";
   const variant = product.variants?.[0];
@@ -61,6 +62,11 @@ export default function ProductCard({ product }) {
     e.preventDefault();
 
     if (product.type === "o") {
+      if (!selectedProductType) {
+        productTypeSelectRef.current?.focus();
+        toast.error("Ürün Tipi Seçin")
+        return;
+      }
       sessionStorage.setItem("custom_product", JSON.stringify(product));
       window.location.href = "/custom";
       return;
@@ -168,6 +174,7 @@ export default function ProductCard({ product }) {
           <select
             value={selectedProductType}
             onChange={handleProductTypeChange}
+            ref={productTypeSelectRef}
             className="input w-1/2">
             <option value="">Ürün Tipini Seçin</option>
             <option value="t">Tişört</option>
@@ -178,7 +185,6 @@ export default function ProductCard({ product }) {
           {/* Sepet butonu */}
           <button
             onClick={handleAddClick}
-            disabled={product?.type === "o" && !selectedProductType}
             className="flex items-center gap-2 rounded-full bg-primary text-white px-4 py-2 text-sm font-medium shadow-md hover:bg-blue-700 transition">
             {product?.type === "o" ? (
               <Sparkles className="w-4 h-4" />
