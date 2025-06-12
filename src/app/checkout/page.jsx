@@ -5,11 +5,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { getCustomerProfile } from "../../store/authSlice";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { MapPin, User, FileText } from "lucide-react";
+import { MapPin, User, FileText, ShieldCheck } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
 import { generatePlatformOrderId } from "../../utils/generatePlatfornOrderId";
 import api from "../../lib/api";
 import { ENDPOINTS } from "../../constants/endpoints";
+import KvkkPolicy from "../../components/KvkkPolicy";
 
 const agreementLinks = [
   /* {
@@ -213,6 +214,16 @@ export default function CheckoutPage() {
               className="input w-full border p-2 rounded"
             />
 
+            {/* Shopier ile Güvenli Ödeme Card */}
+            <div className="bg-green-50 p-4 rounded-lg mb-6 flex justify-between items-center shadow-md">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-6 h-6 text-primary" />
+                  <span className="font-medium text-primary">
+                    <strong>Shopier</strong> ile Güvenli Ödeme Yapabilirsiniz
+                  </span>
+                </div>
+              </div>
+
             <div className="space-y-6">
               <h2 className="text-xl font-semibold flex items-center gap-2 text-gray-700">
                 <User className="w-5 h-5" />
@@ -221,7 +232,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-3">
                 {agreementLinks.map((doc) => (
-                  <label key={doc.title} className="flex items-start gap-2">
+                  <label key={doc.title} className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={agreementsAccepted[doc.title]}
@@ -278,11 +289,9 @@ export default function CheckoutPage() {
               </button>
             </div>
             <div className="p-4 max-h-[75vh] overflow-y-auto">
-              <iframe
-                src={selectedAgreementUrl}
-                title="Sözleşme PDF"
-                className="w-full h-[60vh] border rounded"
-              />
+              <div>
+                <KvkkPolicy />
+              </div>
             </div>
             <div className="p-4 border-t text-right">
               <button

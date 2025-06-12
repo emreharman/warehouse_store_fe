@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useCart } from "../../hooks/useCart";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, Package } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import api from "../../lib/api";
@@ -117,6 +117,16 @@ export default function CartPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-6">Sepetiniz</h1>
+
+      {/* Açılışa Özel Kargo Bedava */}
+      <div className="bg-blue-50 p-4 rounded-lg mb-6 flex justify-between items-center shadow-md">
+        <div className="flex items-center gap-3">
+          <Package className="w-6 h-6 text-primary" />
+          <span className="font-medium text-primary">
+            Açılışa Özel Ücretsiz Kargo
+          </span>
+        </div>
+      </div>
 
       <div className="flex flex-col gap-6">
         {items.map((item, index) => (
