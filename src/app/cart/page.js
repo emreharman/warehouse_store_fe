@@ -9,6 +9,7 @@ import { ENDPOINTS } from "../../constants/endpoints";
 import { useSelector, useDispatch } from "react-redux";
 import { generatePlatformOrderId } from "../../utils/generatePlatfornOrderId";
 import { useRouter } from "next/navigation";
+import { getCustomerProfile } from "../../store/authSlice";
 
 export default function CartPage() {
   const router = useRouter();
