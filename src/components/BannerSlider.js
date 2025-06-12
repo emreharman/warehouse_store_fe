@@ -45,7 +45,7 @@ export default function BannerSlider() {
       {banners.map((banner) => (
         <div
           key={banner.id}
-          className="keen-slider__slide relative aspect-[3/1] w-full"
+          className="keen-slider__slide relative w-full aspect-[1.3/1] sm:aspect-[2/1] md:aspect-[2.5/1] lg:aspect-[3/1]"
         >
           <img
             src={banner.image}
