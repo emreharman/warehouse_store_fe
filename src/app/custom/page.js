@@ -345,17 +345,23 @@ export default function CustomOrderPage() {
       else designFileName = `custom-${Date.now()}-${redirectedProduct?.name}`;
       const { error: designUploadError } = await supabase.storage
         .from("warehouse")
-        .upload(designFileName, files[0]);
+        .upload(
+          designFileName,
+          !redirectedProduct ? files[0] : redirectedProduct?.images?.[0]
+        );
 
       if (designUploadError) throw designUploadError;
 
       const { data: designUploadUrl, error: designUploadUrlError } =
         await supabase.storage.from("warehouse").getPublicUrl(designFileName);
+      console.log("designFile public url", designUploadUrl);
 
       if (designUploadUrlError) throw designUploadUrlError;
 
       // Tasarım URL'ini hazırlıyoruz
-      const designFiles = [designUploadUrl.publicUrl];
+      const designFiles = [];
+      if (!redirectedProduct) designFiles.push(designUploadUrl.publicUrl);
+      else designFiles.push(redirectedProduct?.images?.[0]);
 
       const finalDesignFileName = `custom-${Date.now()}-finalDesign`;
       const { data: finalDesignUploadData, error: finalDesignUploadError } =

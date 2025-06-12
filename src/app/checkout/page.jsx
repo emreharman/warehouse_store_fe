@@ -105,11 +105,7 @@ export default function CheckoutPage() {
       const orderData = {
         order: {
           totalPrice,
-          items: items.map((item) => ({
-            productId: item.id,
-            quantity: item.quantity,
-            price: item.price,
-          })),
+          items,
           platform_order_id: platformOrderId,
         },
         customer,
