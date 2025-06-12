@@ -18,12 +18,12 @@ export default function HomePage() {
   }, [dispatch, products]);
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="max-w-7xl mx-auto p-2 space-y-8">
       <BannerSlider />
 
       <div>
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tüm Ürünler</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {products.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}

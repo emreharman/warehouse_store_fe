@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { useCart } from "../../hooks/useCart";
 import {
   UserCog,
   Lock,
@@ -19,9 +20,11 @@ export default function ProfilePage() {
 
   const dispatch = useDispatch();
   const router = useRouter();
+  const {fetch}=useCart()
 
   const handleLogout = useCallback(() => {
     dispatch(logout());
+    fetch()
     router.push("/user");
   }, [dispatch, router]);
 

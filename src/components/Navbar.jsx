@@ -25,7 +25,7 @@ export default function Navbar() {
 
   useEffect(() => {
     fetch();
-  }, []);
+  }, [customer]);
 
   const isActive = (slugOrId) => {
     if (slugOrId === "all") return pathname === "/";

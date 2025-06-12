@@ -98,12 +98,6 @@ export default function CustomOrderPage() {
     position: "center", // topLeft | center | topRight
   });
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && customer === null) {
-      router.push("/user");
-    }
-  }, [customer]);
-
   const getPrintArea = () => {
     const container = designAreaRef.current?.getBoundingClientRect();
     if (!container) return { top: 0, left: 0, width: 100, height: 100 };
@@ -251,6 +245,8 @@ export default function CustomOrderPage() {
   const handleCancel = (indexToRemove) => {
     setFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
     setShowDesignModal(false);
+    setRedirectedProduct(null);
+    sessionStorage.clear();
 
     // input elementini resetle
     if (fileInputRef.current) {
@@ -398,13 +394,16 @@ export default function CustomOrderPage() {
       setShowDesignModal(false);
       setAddedToCart(true);
       setLoading(false);
+      sessionStorage.clear();
     } catch (err) {
       toast.error("Sepete ekleme sırasında bir hata oluştu.");
       setLoading(false);
       console.error(err);
+      sessionStorage.clear();
     } finally {
       setUploading(false);
       setLoading(false);
+      sessionStorage.clear();
     }
   };
 
@@ -455,6 +454,8 @@ export default function CustomOrderPage() {
       size: "medium",
       position: "center",
     });
+    setRedirectedProduct(null);
+    sessionStorage.clear();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
