@@ -29,6 +29,7 @@ export default function Navbar() {
 
   const isActive = (slugOrId) => {
     if (slugOrId === "all") return pathname === "/";
+    if (slugOrId === "aboutUs") return pathname === "/aboutUs";
     return pathname === `/category/${slugOrId}`;
   };
 
@@ -59,7 +60,8 @@ export default function Navbar() {
                 isActive("all")
                   ? "text-gray-900 font-semibold"
                   : "text-gray-700 hover:text-primary"
-              }`}>
+              }`}
+            >
               <span className="relative z-10 px-1">Anasayfa</span>
               <span
                 className={
@@ -77,7 +79,8 @@ export default function Navbar() {
                     active
                       ? "text-gray-900 font-semibold"
                       : "text-gray-700 hover:text-primary"
-                  }`}>
+                  }`}
+                >
                   <span className="relative z-10 px-1">
                     {toTitleCase(cat.name)}
                   </span>
@@ -87,6 +90,21 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            <Link
+              href="/aboutUs"
+              className={`${baseLinkClasses} ${
+                isActive("aboutUs")
+                  ? "text-gray-900 font-semibold"
+                  : "text-gray-700 hover:text-primary"
+              }`}
+            >
+              <span className="relative z-10 px-1">Hakkımızda</span>
+              <span
+                className={
+                  isActive("aboutUs") ? activeSpanClasses : hoverSpanClasses
+                }
+              />
+            </Link>
           </nav>
         </div>
 
@@ -95,7 +113,8 @@ export default function Navbar() {
           {/* Sepet */}
           <Link
             href="/cart"
-            className="text-gray-700 hover:text-primary transition relative">
+            className="text-gray-700 hover:text-primary transition relative"
+          >
             <ShoppingCart className="w-6 h-6" />
             <span className="absolute -top-2 -right-2 bg-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full shadow">
               {items.length}
@@ -105,7 +124,8 @@ export default function Navbar() {
           {/* Login */}
           <Link
             href={customer ? "/profile" : "/user"}
-            className="text-gray-700 hover:text-primary transition relative">
+            className="text-gray-700 hover:text-primary transition relative"
+          >
             <User className="w-6 h-6" />
           </Link>
         </div>
@@ -120,7 +140,8 @@ export default function Navbar() {
               isActive("all")
                 ? "text-primary font-semibold"
                 : "text-gray-700 hover:text-primary transition"
-            }`}>
+            }`}
+          >
             Anasayfa
           </Link>
           {categories?.map((cat) => (
@@ -131,10 +152,21 @@ export default function Navbar() {
                 isActive(cat.slug || cat._id)
                   ? "text-primary font-semibold"
                   : "text-gray-700 hover:text-primary transition"
-              }`}>
+              }`}
+            >
               {toTitleCase(cat.name)}
             </Link>
           ))}
+          <Link
+            href="/aboutUs"
+            className={`px-1 ${
+              isActive("aboutUs")
+                ? "text-primary font-semibold"
+                : "text-gray-700 hover:text-primary transition"
+            }`}
+          >
+            Hakkımızda
+          </Link>
         </nav>
       </div>
     </header>
