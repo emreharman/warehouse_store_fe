@@ -310,14 +310,14 @@ export default function CheckoutPage() {
               setIsModalOpen(false);
               setPaymentLink(null);
             }}
-            className="absolute top-2 right-2 w-8 h-8 bg-white text-black text-lg font-bold rounded-full flex items-center justify-center hover:bg-gray-100 transition z-100">
+            className="absolute top-8 right-2 w-8 h-8 bg-white text-black text-lg font-bold rounded-full flex items-center justify-center hover:bg-gray-100 transition z-100">
             ×
           </button>
-          <div className="bg-white p-4 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-xl relative">
+          <div className="bg-white p-4 rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden shadow-xl relative">
             <iframe
               srcDoc={paymentLink}
               title="Shopier Payment"
-              className="w-full h-[80vh] border rounded z-0"
+              className="w-full h-[70vh] border rounded z-0"
               allow="payment"
               scrolling="yes"
               style={{ overflow: "auto" }}
