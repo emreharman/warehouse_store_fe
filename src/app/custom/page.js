@@ -275,7 +275,7 @@ export default function CustomOrderPage() {
       }
     };
     fetchOptions();
-  }, []);
+  }, [addedToCart]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -319,6 +319,11 @@ export default function CustomOrderPage() {
   };
 
   const handleAddToCart = async () => {
+    if (!customer) {
+      router.push("/user");
+      return;
+    }
+
     if (
       !selectedVariant.color ||
       !selectedVariant.size ||
@@ -354,7 +359,6 @@ export default function CustomOrderPage() {
 
       const { data: designUploadUrl, error: designUploadUrlError } =
         await supabase.storage.from("warehouse").getPublicUrl(designFileName);
-      console.log("designFile public url", designUploadUrl);
 
       if (designUploadUrlError) throw designUploadUrlError;
 
@@ -807,7 +811,6 @@ export default function CustomOrderPage() {
               <button
                 onClick={async () => {
                   const dataUrl = await captureFinalDesign();
-                  console.log("dataUrl", dataUrl);
 
                   setFinalDesignDataUrl(dataUrl);
                   setShowDesignModal(false);
