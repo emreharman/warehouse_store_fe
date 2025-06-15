@@ -230,7 +230,7 @@ export default function ProductDetailPage() {
                         "custom_product",
                         JSON.stringify(product)
                       );
-                      window.location.href = "/custom";
+                      window.location.href = "/custom-design";
                     }}
                     disabled={!selectedProductType}
                     className="w-full py-4 rounded-xl text-lg font-semibold shadow-md bg-primary text-white hover:bg-white hover:text-primary hover:ring-2 hover:ring-primary hover:shadow-lg transition">
