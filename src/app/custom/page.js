@@ -264,6 +264,8 @@ export default function CustomOrderPage() {
     const fetchOptions = async () => {
       try {
         const res = await api.get("/variant-options/public");
+        console.log(res.data);
+        
         setVariantOptions({
           color: res.data.color || [],
           size: res.data.size || [],
@@ -537,7 +539,6 @@ export default function CustomOrderPage() {
                           onChange={handleVariantChange}
                           className="input capitalize"
                           required>
-                          <option value="">{type}</option>
                           {options.map((opt, i) => (
                             <option key={i} value={opt}>
                               {opt}
