@@ -28,6 +28,13 @@ const variantLabels = {
   size: "Beden Seçin",
 };
 
+const colorHexMap = {
+  Beyaz: "#ffffff", // Saf beyaz
+  Siyah: "#000000", // Saf siyah
+  Kahverengi: "#8B4513", // SaddleBrown (doğal kahverengi tonu)
+  "Duman Gri": "#A9A9A9", // DarkGray (duman grisine daha yakın)
+};
+
 export default function CustomOrderPage() {
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
@@ -111,16 +118,15 @@ export default function CustomOrderPage() {
   const getPrintArea = () => {
     const container = designAreaRef.current?.getBoundingClientRect();
     if (!container) return { top: 0, left: 0, width: 100, height: 100 };
-  
+
     const width = container.width * 0.45; // genişliğin %45'i
     const height = container.height * 0.55; // yüksekliğin %55'i
-  
+
     const left = (container.width - width) / 2;
     const top = (container.height - height) / 2;
-  
+
     return { top, left, width, height };
   };
-  
 
   useEffect(() => {
     const checkMobile = () => {
@@ -545,22 +551,24 @@ export default function CustomOrderPage() {
                       </select>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {Object.entries(variantOptions).map(([type, options]) => (
-                        <select
-                          key={type}
-                          name={type}
-                          value={selectedVariant[type] || ""}
-                          onChange={handleVariantChange}
-                          className="input capitalize"
-                          required>
-                          <option value={""}>{variantLabels[type]}</option>
-                          {options.map((opt, i) => (
-                            <option key={i} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      ))}
+                      {Object.entries(variantOptions)
+                        .filter(([type]) => type !== "color") // <== Renk buradan çıkarılıyor
+                        .map(([type, options]) => (
+                          <select
+                            key={type}
+                            name={type}
+                            value={selectedVariant[type] || ""}
+                            onChange={handleVariantChange}
+                            className="input capitalize"
+                            required>
+                            <option value="">{variantLabels[type]}</option>
+                            {options.map((opt, i) => (
+                              <option key={i} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                          </select>
+                        ))}
                     </div>
                     <button
                       type="button"
@@ -738,7 +746,7 @@ export default function CustomOrderPage() {
             <div className="w-full flex justify-center">
               <div
                 ref={designAreaRef}
-                className="relative bg-gray-100 rounded-lg flex items-center justify-center w-[300px] md:w-[360px] h-[400px] md:h-[480px]">
+                className="relative bg-gray-100 rounded-lg flex items-center justify-center w-[300px] h-[400px]">
                 <div
                   className="absolute border-4 border-red-600 border-dashed rounded"
                   style={{
@@ -748,7 +756,7 @@ export default function CustomOrderPage() {
                   }}></div>
                 <TshirtViewer
                   side={designConfig.side}
-                  color={selectedVariant.color || "#ffffff"}>
+                  color={colorHexMap[selectedVariant.color] || "#ffffff"}>
                   {/* Tasarım bindirme */}
 
                   {files[0] && !redirectedProduct && (
@@ -826,6 +834,24 @@ export default function CustomOrderPage() {
                   )}
                 </TshirtViewer>
               </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {variantOptions.color.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() =>
+                    setSelectedVariant((prev) => ({ ...prev, color }))
+                  }
+                  className={`w-8 h-8 rounded-full border-2 ${
+                    selectedVariant.color === color
+                      ? "border-black scale-110"
+                      : "border-gray-300"
+                  } transition-transform`}
+                  style={{ backgroundColor: colorHexMap[color] || "#fff" }}
+                  title={color}
+                />
+              ))}
             </div>
 
             {/* Dipnot */}
