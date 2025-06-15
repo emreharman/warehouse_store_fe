@@ -20,6 +20,13 @@ const prices = {
   c: 390,
 };
 
+const variantLabels = {
+  color: "Renk Seçin",
+  fit: "Kalıp Seçin",
+  quality: "Kalite Seçin",
+  size: "Beden Seçin",
+};
+
 export default function CustomOrderPage() {
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
@@ -527,6 +534,7 @@ export default function CustomOrderPage() {
                         value={productType}
                         onChange={(e) => setProductType(e.target.value)}
                         className="input">
+                        <option value="">Ürün Seçin</option>
                         <option value="t">Tişört</option>
                         <option value="h">Hoodie</option>
                         <option value="c">Çocuk</option>
@@ -541,6 +549,7 @@ export default function CustomOrderPage() {
                           onChange={handleVariantChange}
                           className="input capitalize"
                           required>
+                          <option value={""}>{variantLabels[type]}</option>
                           {options.map((opt, i) => (
                             <option key={i} value={opt}>
                               {opt}
