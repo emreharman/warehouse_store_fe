@@ -754,7 +754,12 @@ export default function CustomOrderPage() {
                       designConfig.size
                     )} transition-all`}
                     onMouseDown={() => setIsDragging(true)}
-                    onTouchStart={() => setIsDragging(true)}
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onContextMenu={(e) => e.preventDefault()} // Sağ tık menüsünü engelle
+                    onDragStart={(e) => e.preventDefault()} // Native drag behavior'ı engelle
                     style={{
                       top: `${dragPosition.y}px`,
                       left: `${dragPosition.x}px`,
