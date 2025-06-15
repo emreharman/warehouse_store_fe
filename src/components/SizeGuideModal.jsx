@@ -3,20 +3,35 @@ import { useState } from "react";
 const SizeGuideModal = ({ isOpen, onClose }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const images = [
-    "/regular-size.jpeg",
-    "/oversize-size.jpeg",
-    "/buyuk-size.jpeg",
-    "/hoodie-size.jpeg",
-    "/cocuk-size.jpeg",
+  const imagess = [
+    {
+      img: "/regular-size.jpeg",
+      title: "Regular",
+    },
+    {
+      img: "/oversize-size.jpeg",
+      title: "Oversize",
+    },
+    {
+      img: "/buyuk-size.jpeg",
+      title: "Büyük Beden",
+    },
+    {
+      img: "/hoodie-size.jpeg",
+      title: "Hoodie",
+    },
+    {
+      img: "/cocuk-size.jpeg",
+      title: "Çocuk",
+    },
   ];
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % images.length);
+    setCurrentSlide((prev) => (prev + 1) % imagess.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + images.length) % images.length);
+    setCurrentSlide((prev) => (prev - 1 + imagess.length) % imagess.length);
   };
 
   if (!isOpen) return null;
@@ -24,30 +39,38 @@ const SizeGuideModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg w-full max-w-md relative">
-        <h2 className="text-lg font-semibold mb-4">Beden Rehberi</h2>
+        <h2 className="text-lg font-semibold mb-4 text-center">
+          Beden Rehberi
+        </h2>
+
         <div className="relative">
           <img
-            src={images[currentSlide]}
-            alt={`Slide ${currentSlide + 1}`}
-            className="rounded w-full"
+            src={imagess[currentSlide].img}
+            alt={imagess[currentSlide].title}
+            className="rounded w-full mb-2"
           />
-          {images.length > 1 && (
+          <div className="text-center text-sm font-medium text-gray-700 mb-2">
+            {imagess[currentSlide].title}
+          </div>
+
+          {imagess.length > 1 && (
             <>
               <button
                 type="button"
                 onClick={prevSlide}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-white shadow rounded-l">
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-white shadow rounded-l text-xl">
                 ‹
               </button>
               <button
                 type="button"
                 onClick={nextSlide}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-white shadow rounded-r">
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 px-3 py-1 bg-white shadow rounded-r text-xl">
                 ›
               </button>
             </>
           )}
         </div>
+
         <button
           type="button"
           onClick={onClose}
@@ -58,4 +81,5 @@ const SizeGuideModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
 export default SizeGuideModal;
