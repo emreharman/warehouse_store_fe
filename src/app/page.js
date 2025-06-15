@@ -18,11 +18,24 @@ export default function HomePage() {
   }, [dispatch, products]);
 
   // Create a copy of products array and sort by createdAt date in descending order (newest first)
-  const sortedProducts = [...products]?.sort?.((a, b) => new Date(b?.createdAt) - new Date(a?.createdAt));
+  const sortedProducts = [...products]?.sort?.(
+    (a, b) => new Date(b?.createdAt) - new Date(a?.createdAt)
+  );
 
   return (
     <div className="max-w-7xl mx-auto p-2 space-y-8">
       <BannerSlider />
+
+      <div className="bg-blue-100 p-4 rounded-lg shadow-md text-center mt-8">
+        <p className="text-lg font-medium text-gray-800">
+          Toplu ve Kurumsal siparişleriniz için lütfen bizimle iletişime geçin
+        </p>
+        <a
+          href="mailto:info@modtee.com.tr"
+          className="mt-4 inline-block px-6 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600">
+          Bize Ulaşın
+        </a>
+      </div>
 
       <div>
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tüm Ürünler</h2>
