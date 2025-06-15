@@ -17,6 +17,9 @@ export default function HomePage() {
     dispatch(fetchVariantOptions());
   }, [dispatch, products]);
 
+  // Create a copy of products array and sort by createdAt date in descending order (newest first)
+  const sortedProducts = [...products]?.sort?.((a, b) => new Date(b?.createdAt) - new Date(a?.createdAt));
+
   return (
     <div className="max-w-7xl mx-auto p-2 space-y-8">
       <BannerSlider />
@@ -24,7 +27,7 @@ export default function HomePage() {
       <div>
         <h2 className="text-xl font-bold mb-4 text-gray-800">Tüm Ürünler</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {products.map((product) => (
+          {sortedProducts.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}
         </div>
