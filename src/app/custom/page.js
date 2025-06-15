@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "../../hooks/useCart";
 import { getCustomerProfile } from "../../store/authSlice";
 import Spinner from "../../components/Spinner";
+import SizeGuideModal from "../../components/SizeGuideModal";
 
 const prices = {
   t: 480,
@@ -71,6 +72,7 @@ export default function CustomOrderPage() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [loading, setLoading] = useState(false);
   const [redirectedProduct, setRedirectedProduct] = useState(null);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
   const agreementLinks = [
     {
@@ -265,7 +267,7 @@ export default function CustomOrderPage() {
       try {
         const res = await api.get("/variant-options/public");
         console.log(res.data);
-        
+
         setVariantOptions({
           color: res.data.color || [],
           size: res.data.size || [],
@@ -547,6 +549,16 @@ export default function CustomOrderPage() {
                         </select>
                       ))}
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsSizeGuideOpen(true)}
+                      className="text-sm underline text-blue-600 hover:text-blue-800">
+                      Beden Rehberi
+                    </button>
+                    <SizeGuideModal
+                      isOpen={isSizeGuideOpen}
+                      onClose={() => setIsSizeGuideOpen(false)}
+                    />
                   </div>
                   {/* Adet + Not */}
                   <div className="space-y-4">
