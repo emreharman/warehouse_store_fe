@@ -119,11 +119,21 @@ export default function CustomOrderPage() {
     const container = designAreaRef.current?.getBoundingClientRect();
     if (!container) return { top: 0, left: 0, width: 100, height: 100 };
 
-    const width = container.width * 0.45; // genişliğin %45'i
-    const height = container.height * 0.55; // yüksekliğin %55'i
+    let widthRatio = 0.45;
+    let heightRatio = 0.55;
+    let verticalOffset = 0; // px cinsinden
+
+    if (productType === "c") {
+      widthRatio = 0.4;
+      heightRatio = 0.4;
+      verticalOffset = -30; // çocuk tişörtü için yukarı kaydır
+    }
+
+    const width = container.width * widthRatio;
+    const height = container.height * heightRatio;
 
     const left = (container.width - width) / 2;
-    const top = (container.height - height) / 2;
+    const top = (container.height - height) / 2 + verticalOffset;
 
     return { top, left, width, height };
   };
@@ -755,8 +765,9 @@ export default function CustomOrderPage() {
                     zIndex: 10,
                   }}></div>
                 <TshirtViewer
-                  side={designConfig.side}
-                  color={colorHexMap[selectedVariant.color] || "#ffffff"}>
+                  color={colorHexMap[selectedVariant.color]}
+                  productType={productType}
+                  side={designConfig.side}>
                   {/* Tasarım bindirme */}
 
                   {files[0] && !redirectedProduct && (
