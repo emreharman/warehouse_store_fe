@@ -758,7 +758,7 @@ export default function CustomOrderPage() {
                 ref={designAreaRef}
                 className="relative bg-gray-100 rounded-lg flex items-center justify-center w-[300px] h-[400px]">
                 <div
-                  className="absolute border-4 border-red-600 border-dashed rounded"
+                  className="absolute border-2 border-red-600 border-dashed rounded"
                   style={{
                     ...getPrintArea(),
                     pointerEvents: "none",
