@@ -68,7 +68,7 @@ export default function ProductCard({ product }) {
         return;
       }
       sessionStorage.setItem("custom_product", JSON.stringify(product));
-      window.location.href = "/custom";
+      window.location.href = "/custom-design";
       return;
     }
 
